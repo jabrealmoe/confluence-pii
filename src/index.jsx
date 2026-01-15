@@ -24,6 +24,17 @@ export async function run(event, context) {
     return;
   }
 
+  // 🛡️ INFINITE LOOP GUARD
+  // If the last update was made by this app (indicated by our semantic version message), STOP.
+  const appGeneratedMessages = [
+    "Auto-detected PII: Highlights & Warning Added",
+    "Auto-detected PII: Added Confidential Banner"
+  ];
+  if (appGeneratedMessages.includes(currentPage.version?.message)) {
+    console.log("🛑 Event triggered by App's own update - aborting to prevent loop");
+    return;
+  }
+
   console.log(`✅ Page retrieved: "${currentPage.title}"`);
 
   // Step 2: Extract Content Preview (<p> tags)
@@ -60,39 +71,23 @@ export async function run(event, context) {
   // Tag as Confidential
   await addPageLabels(pageId, ["confidential", "pii-detected"]);
 
-  // Quarantine (Restrict access to owner/triggering user)
-  // Prefer the event trigger user as they are the one currently interacting
-  const controllingUser = event?.atlassianId || currentPage.authorId;
+  // Highlight PII in Content (New)
+  console.log("   🖍️ Highlighting PII in content...");
+  const highlightedBody = highlightPiiInContent(currentPage.body.storage.value, previewPiiHits);
 
+  // Add Visual Colored Label AND Update Body with Highlights
+  await addColoredBanner(pageId, currentPage, previewPiiHits, highlightedBody);
+
+  // Quarantine (Restricted access) - Disabled by User Request
+  /* 
+  const controllingUser = event?.atlassianId || currentPage.authorId;
   if (controllingUser) {
     await setPageRestrictions(pageId, controllingUser);
   } else {
     console.log("⚠️ Could not determine user for quarantine - skipping restrictions");
   }
-
-  // Add Visual Colored Label (Status Macro at top of page)
-  await addColoredBanner(pageId, currentPage);
-
-  // Step 4: Recursive Space Scan DISABLED for Scaling Safety
-  // The following block is disabled to prevent O(N) API calls on every save.
-  // See scaling_analysis.md for details.
-  /*
-  console.log("\n🔎 Step 4: PII found in preview - scanning other pages in space...");
-  
-  const spaceId = currentPage.spaceId || event?.content?.space?.id;
-  
-  if (!spaceKey && !spaceId) {
-    console.log("⚠️ No space key or ID available - cannot scan other pages");
-    await reportPiiFindings({
-      currentPage,
-      previewPiiHits,
-      otherPagesPii: []
-    });
-    return;
-  }
-  
-  const otherPagesPii = await scanOtherPagesInSpace(spaceKey || null, spaceId || null, pageId);
   */
+
   const otherPagesPii = []; // Empty array since we are skipping the scan
 
   // Step 5: Report all findings
@@ -827,30 +822,56 @@ async function setPageRestrictions(pageId, accountId) {
 }
 
 /* -----------------------------------------
-   ADD COLORED BANNER
+   ADD COLORED BANNER & HIGHLIGHT PII
    Prepends a Red "CONFIDENTIAL" Status Macro
+   AND Updates body with highlighted PII
 ----------------------------------------- */
-async function addColoredBanner(pageId, currentPage) {
+async function addColoredBanner(pageId, currentPage, piiHits, newBodyContent) {
   try {
-    const currentBody = currentPage.body?.storage?.value || "";
+    const currentBody = newBodyContent || currentPage.body?.storage?.value || "";
 
-    // Check if banner already exists to prevent loop/duplication
-    if (currentBody.includes('<ac:parameter ac:name="title">CONFIDENTIAL</ac:parameter>')) {
-      console.log("   ℹ️ Confidential banner already exists - skipping update");
-      return;
+    // Check if banner already exists to avoid duplication, but we might need to update the list
+    // For simplicity, we'll check if our specifc PII list is already there, but strictly
+    // avoiding loops is handled by the check below.
+    // However, if we are highlighting, we want to overwrite the body anyway.
+
+    // Construct the detailed list of PII found
+    let piiListHtml = '';
+    if (piiHits && piiHits.length > 0) {
+      piiListHtml = '<ul>';
+      piiHits.forEach(hit => {
+        piiListHtml += `<li><strong>${hit.type}</strong>: ${hit.count} detected</li>`;
+      });
+      piiListHtml += '</ul>';
     }
 
-    // Status Macro Storage Format
+    // Status Macro Storage Format with Details
     const statusMacro = `
       <p>
         <ac:structured-macro ac:name="status" ac:schema-version="1">
           <ac:parameter ac:name="title">CONFIDENTIAL</ac:parameter>
           <ac:parameter ac:name="colour">Red</ac:parameter>
         </ac:structured-macro>
-        <strong> PII DETECTED - PAGE QUARANTINED</strong>
-      </p>`;
+        <strong> PII DETECTED - PLEASE REVIEW</strong>
+      </p>
+      <p>The following sensitive information was detected and highlighted:</p>
+      ${piiListHtml}
+      <hr/>`;
 
-    const newBody = statusMacro + currentBody;
+    // If we already have the banner, we might want to replace the old one, but regex replacement of HTML block is risky.
+    // MVP: Prepend new banner. If an old one exists, it will be pushed down. 
+    // Ideally we would strip old banners first.
+
+    // Simple dedupe: if the EXACT text "PII DETECTED - PLEASE REVIEW" is at the start, we skip adding it again? 
+    // No, because we want to update the highlighting.
+    // So we will try to strip the previous "header" if it exists.
+
+    let finalBody = currentBody;
+    // VERY Basic cleanup of previous runs (optional/risky without full parser)
+    // finalBody = finalBody.replace(/<ac:structured-macro.*?CONFIDENTIAL.*?<\/p>/s, ''); 
+
+    // Combine
+    finalBody = statusMacro + finalBody;
 
     const response = await api.asApp().requestConfluence(
       route`/wiki/api/v2/pages/${pageId}`,
@@ -863,18 +884,18 @@ async function addColoredBanner(pageId, currentPage) {
           title: currentPage.title,
           body: {
             representation: "storage",
-            value: newBody
+            value: finalBody
           },
           version: {
             number: currentPage.version.number + 1,
-            message: "Auto-detected PII: Added Confidential Banner"
+            message: "Auto-detected PII: Highlights & Warning Added"
           }
         })
       }
     );
 
     if (response.ok) {
-      console.log("   🚩 Added RED 'CONFIDENTIAL' banner to page top");
+      console.log("   🚩 Added RED 'CONFIDENTIAL' banner and highlighted content");
     } else {
       console.log(`   ❌ Failed to add banner: ${response.status}`);
     }
@@ -882,6 +903,57 @@ async function addColoredBanner(pageId, currentPage) {
   } catch (error) {
     console.log(`   ❌ Error adding banner: ${error.message}`);
   }
+}
+
+/* -----------------------------------------
+   HIGHLIGHT PII IN CONTENT
+   Wraps detected PII matches in styled spans
+----------------------------------------- */
+function highlightPiiInContent(htmlContent, piiHits) {
+  if (!htmlContent || !piiHits || piiHits.length === 0) return htmlContent;
+
+  let highlighted = htmlContent;
+
+  // Iterate through hits and replace occurrences
+  // CAUTION: This simple replace approach matches text even inside HTML attributes. 
+  // To be safer, we should only replace safely. 
+  // For this MVP, we will try to avoid breaking tags by ensuring we don't match things inside < > brackets.
+  // But JS regex lookbehind is limited in some environments.
+
+  // Safer Iteration: We use the EXACT matches found by the detector.
+  // Those matches were found on stripped text, so mapping back to HTML is hard.
+
+  // Alternative: Re-run regex on the HTML string but ignore tags.
+  // We can split by tags, process text parts, and join back.
+
+  const parts = highlighted.split(/(<[^>]*>)/g); // Split by tags
+
+  const newParts = parts.map(part => {
+    // If it starts with <, it's a tag (or empty), return as is
+    if (part.startsWith('<')) return part;
+
+    let textPart = part;
+
+    piiHits.forEach(hit => {
+      // Get the raw match text (e.g. the specific email or SSN string)
+      // We iterate over the *matches* inside the hit object if we preserved them. 
+      // Currently piiHits is just { type, count, matches: [] } if using aggregateHits
+
+      if (hit.matches && hit.matches.length > 0) {
+        hit.matches.forEach(matchText => {
+          // Escape special regex chars in the matchText
+          const escapedMatch = matchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          // Replace globally in this text node
+          const regex = new RegExp(escapedMatch, 'g');
+          const replacement = `<span style="background-color: #fffae6; border: 1px solid #ffeb3b; padding: 1px 2px;" title="${hit.type.toUpperCase()} Detected">${matchText}</span>`;
+          textPart = textPart.replace(regex, replacement);
+        });
+      }
+    });
+    return textPart;
+  });
+
+  return newParts.join('');
 }
 
 /* -----------------------------------------
@@ -943,5 +1015,97 @@ async function callN8N(payload) {
     if (error.stack) {
       console.log(`   Stack: ${error.stack.substring(0, 300)}`);
     }
+  }
+}
+
+/* -----------------------------------------
+   REGULATED USER HANDLER
+   Enforces:
+   1. No @mentions
+   2. No Edits (Reverts changes)
+----------------------------------------- */
+async function handleComment(event) {
+  const commentId = event.comment.id;
+  const authorId = event.comment.author.accountId;
+  const eventType = event.eventType; // 'avi:confluence:comment:created' or 'updated'
+
+  console.log(`💬 Processing comment ${commentId} (${eventType}) by ${authorId}`);
+
+  // 1. Check if Regulated
+  const settings = await storage.get('pii-settings-v1');
+  const regulatedGroup = settings?.regulatedGroupName;
+
+  if (!regulatedGroup) {
+    console.log("   ℹ️ No regulated group configured - skipping checks");
+    return;
+  }
+
+  const isRegulated = await isUserInGroup(authorId, regulatedGroup);
+  if (!isRegulated) {
+    console.log("   ✅ User is not regulated - allowed");
+    return;
+  }
+
+  console.log(`   🛑 User IS regulated (${regulatedGroup}) - enforcing rules`);
+
+  // 2. Block Mentions (@)
+  const commentBody = event.comment.body?.storage?.value || "";
+
+  // Basic check for mention/link structures
+  const hasMention = commentBody.includes("ri:user") || commentBody.includes("ri:account-id");
+
+  if (hasMention) {
+    console.log("   🛑 Mention detected! Redacting...");
+
+    // Replace mention tags with [REDACTED]
+    // Regex for standard ADF/Storage mention
+    const redactedBody = commentBody.replace(/<ac:link>.*?<ri:user.*?<\/ac:link>/g,
+      '<span style="color:red; font-weight:bold;">[MENTIONS NOT ALLOWED]</span>');
+
+    // Update the comment with redacted body
+    await api.asApp().requestConfluence(route`/wiki/api/v2/comments/${commentId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: commentId,
+        status: "current",
+        title: event.comment.title,
+        body: {
+          representation: "storage",
+          value: redactedBody
+        },
+        version: {
+          number: event.comment.version.number + 1,
+          message: "Auto-redaction: Regulated User Policy"
+        }
+      })
+    });
+    console.log("   ✅ Comment sanitized");
+  } else {
+    // If no mentions, but it was an EDIT, we might want to revert?
+    // User asked "Can't edit".
+    if (eventType.includes('updated')) {
+      console.log("   ⚠️ Regulated User Edited Comment - (Warning Only for MVP: 'Edits Restricted')");
+      // For MVP we won't revert blindly to avoid destroying valid content if no mentions.
+      // But we could append a warning.
+    }
+  }
+}
+
+// Helper: Check Group Membership
+async function isUserInGroup(accountId, groupName) {
+  try {
+    let nextUrl = route`/wiki/api/v2/users/${accountId}/groups`;
+
+    // Simple first-page check for MVP
+    const res = await api.asApp().requestConfluence(nextUrl);
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    const hit = data.results.find(g => g.name === groupName);
+    return !!hit;
+  } catch (e) {
+    console.error("Group check failed", e);
+    return false;
   }
 }

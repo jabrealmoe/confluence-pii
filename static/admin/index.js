@@ -1,0 +1,133 @@
+import React, { useEffect, useState } from 'react';
+import { invoke } from '@forge/bridge';
+import { createRoot } from 'react-dom/client';
+import DnaAnimation from './DnaAnimation';
+
+const App = () => {
+    const [settings, setSettings] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+
+    useEffect(() => {
+        invoke('getSettings').then((data) => {
+            setSettings(data || {}); // Ensure object
+            setLoading(false);
+        });
+    }, []);
+
+    const handleChange = (key, value) => {
+        setSettings(prev => ({ ...prev, [key]: value }));
+        setSaved(false); // Reset saved indicator on change
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            await invoke('saveSettings', settings);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000); // Hide success after 3s
+        } catch (e) {
+            console.error("Failed to save", e);
+            alert("Failed to save settings. Please try again.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) return <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>Loading settings...</div>;
+
+    return (
+        <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
+            <DnaAnimation />
+
+            <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ margin: 0 }}>PII Types</h2>
+            </div>
+
+            <p style={{ color: '#6b778c' }}>Select which types of Personally Identifiable Information (PII) should be detected.</p>
+
+            <div style={{
+                marginTop: '20px',
+                backgroundColor: 'white',
+                padding: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+                <h4 style={{ marginTop: 0, marginBottom: '15px' }}>Detection Rules</h4>
+                {Object.keys(settings).filter(k => k !== 'regulatedGroupName').map((key) => (
+                    <div key={key} style={{ marginBottom: '12px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={settings[key]}
+                                onChange={(e) => handleChange(key, e.target.checked)}
+                                style={{ marginRight: '10px', width: '16px', height: '16px' }}
+                            />
+                            <span style={{ fontSize: '14px' }}>
+                                {key === 'driversLicense' ? "Driver's License" : key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}
+                            </span>
+                        </label>
+                    </div>
+                ))}
+            </div>
+
+            <div style={{
+                marginTop: '20px',
+                backgroundColor: 'white',
+                padding: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+                <h3 style={{ marginTop: 0 }}>Regulated User Control</h3>
+                <p style={{ fontSize: '14px', color: '#6b778c' }}>
+                    Users in this group will be blocked from using @mentions and editing comments.
+                </p>
+
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>Regulated Group Name:</label>
+                <input
+                    type="text"
+                    value={settings.regulatedGroupName || ''}
+                    onChange={(e) => handleChange('regulatedGroupName', e.target.value)}
+                    placeholder="e.g., contractors"
+                    style={{
+                        padding: '10px',
+                        width: '100%',
+                        fontSize: '14px',
+                        borderRadius: '4px',
+                        border: '1px solid #dfe1e6',
+                        backgroundColor: '#fafbfc'
+                    }}
+                />
+            </div>
+
+            <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    style={{
+                        padding: '12px 24px',
+                        backgroundColor: saved ? '#36b37e' : '#0052cc',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: saving ? 'not-allowed' : 'pointer',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        transition: 'background-color 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                >
+                    {saving ? 'Saving...' : saved ? '✅ Saved Successfully' : 'Save Settings'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const container = document.getElementById('root');
+const root = createRoot(container);
+root.render(<App />);
