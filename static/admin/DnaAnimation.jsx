@@ -9,11 +9,10 @@ const DnaAnimation = () => {
 
         // Scene Setup
         const scene = new THREE.Scene();
-        // Transparent background handled by renderer/CSS, scene background can be null
 
         // Camera
         const camera = new THREE.PerspectiveCamera(75, mountRef.current.clientWidth / mountRef.current.clientHeight, 0.1, 1000);
-        camera.position.z = 12;
+        camera.position.z = 16;
         camera.position.y = 0;
 
         // Renderer
@@ -22,115 +21,198 @@ const DnaAnimation = () => {
         renderer.setClearColor(0x000000, 0); // Transparent
         mountRef.current.appendChild(renderer.domElement);
 
-        // DNA Group
+        // Core Groups
+        const worldGroup = new THREE.Group();
         const dnaGroup = new THREE.Group();
+        const particleGroup = new THREE.Group();
+        const proteinGroup = new THREE.Group();
 
-        // Parameters
-        const numPairs = 40;
-        const radius = 3;
-        const height = 18;
-        const turns = 2;
+        worldGroup.add(dnaGroup);
+        worldGroup.add(particleGroup);
+        worldGroup.add(proteinGroup);
+        scene.add(worldGroup);
+
+        // ==========================
+        // 1. DNA Double Helix
+        // ==========================
+        const numPairs = 50;
+        const radius = 2.5;
+        const height = 24;
+        const turns = 3;
         const heightStep = height / numPairs;
         const angleStep = (Math.PI * 2 * turns) / numPairs;
 
-        // Colors
-        // Adenine (Red) - Thymine (Blue)
-        // Guanine (Green) - Cytosine (Yellow)
+        const atomGeo = new THREE.SphereGeometry(0.35, 16, 16);
+        const backboneGeo = new THREE.SphereGeometry(0.5, 16, 16);
+        const bondMat = new THREE.MeshPhongMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
+
+        // Colors: Adenine-Thymine (Neon Orange-Deep Blue), Guanine-Cytosine (Lime-Hot Pink)
         const colors = [
-            { a: 0xff1744, b: 0x2979ff }, // A-T
-            { a: 0x00e676, b: 0xffea00 }  // G-C
+            { a: 0xff6d00, b: 0x2962ff }, // Orange-Blue
+            { a: 0x64dd17, b: 0xd500f9 }  // Lime-Pink
         ];
 
-        // Geometries (Reuse for performance)
-        const atomGeo = new THREE.SphereGeometry(0.4, 16, 16);
-        const backboneGeo = new THREE.SphereGeometry(0.5, 16, 16);
-
-        // Materials
-        // Vibrant Backbone Colors (Alternating)
-        const backboneMat1 = new THREE.MeshPhongMaterial({ color: 0xe040fb, shininess: 100 }); // Vibrant Purple
-        const backboneMat2 = new THREE.MeshPhongMaterial({ color: 0x00b0ff, shininess: 100 }); // Vibrant Blue/Cyan
-        // Translucent Bond
-        const bondMat = new THREE.MeshPhongMaterial({ color: 0xffffff, opacity: 0.4, transparent: true });
+        // Backbone Materials (Dev Mode: Darker/High Contrast)
+        const bbMat1 = new THREE.MeshPhongMaterial({ color: 0xffab00, shininess: 120 }); // Amber
+        const bbMat2 = new THREE.MeshPhongMaterial({ color: 0x00e5ff, shininess: 120 }); // Cyan
 
         for (let i = 0; i < numPairs; i++) {
             const y = (i * heightStep) - (height / 2);
             const angle = i * angleStep;
 
-            // Backbone positions
             const x1 = Math.cos(angle) * radius;
             const z1 = Math.sin(angle) * radius;
-
-            const x2 = Math.cos(angle + Math.PI) * radius; // Opposite side
+            const x2 = Math.cos(angle + Math.PI) * radius;
             const z2 = Math.sin(angle + Math.PI) * radius;
 
-            // Choose backbone color based on sequence
-            const bbMat = (i % 2 === 0) ? backboneMat1 : backboneMat2;
+            const bb = new THREE.Mesh(backboneGeo, i % 2 === 0 ? bbMat1 : bbMat2);
+            bb.position.set(x1, y, z1);
+            dnaGroup.add(bb);
 
-            // Create Backbone Atoms
-            const bb1 = new THREE.Mesh(backboneGeo, bbMat);
-            bb1.position.set(x1, y, z1);
-            dnaGroup.add(bb1);
+            const bbOpp = new THREE.Mesh(backboneGeo, i % 2 === 0 ? bbMat1 : bbMat2);
+            bbOpp.position.set(x2, y, z2);
+            dnaGroup.add(bbOpp);
 
-            const bb2 = new THREE.Mesh(backboneGeo, bbMat);
-            bb2.position.set(x2, y, z2);
-            dnaGroup.add(bb2);
+            // Bases & Bond
+            const col = colors[i % 2];
+            const b1 = new THREE.Mesh(atomGeo, new THREE.MeshPhongMaterial({ color: col.a }));
+            b1.position.set(x1 * 0.6, y, z1 * 0.6);
+            dnaGroup.add(b1);
 
-            // Base Pair
-            const colorPair = colors[i % 2]; // Alternating pattern
+            const b2 = new THREE.Mesh(atomGeo, new THREE.MeshPhongMaterial({ color: col.b }));
+            b2.position.set(x2 * 0.6, y, z2 * 0.6);
+            dnaGroup.add(b2);
 
-            // Half 1 
-            const base1Mat = new THREE.MeshPhongMaterial({ color: colorPair.a, shininess: 80 });
-            const base1 = new THREE.Mesh(atomGeo, base1Mat);
-            // Position slightly towards center
-            base1.position.set(x1 * 0.6, y, z1 * 0.6);
-            dnaGroup.add(base1);
-
-            // Half 2 
-            const base2Mat = new THREE.MeshPhongMaterial({ color: colorPair.b, shininess: 80 });
-            const base2 = new THREE.Mesh(atomGeo, base2Mat);
-            base2.position.set(x2 * 0.6, y, z2 * 0.6);
-            dnaGroup.add(base2);
-
-            // Connection (Hydrogen Bond visual)
             const bond = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, radius * 1.2, 8), bondMat);
-
-            // Align bond
-            const start = new THREE.Vector3(x1, y, z1);
-            const end = new THREE.Vector3(x2, y, z2);
-            const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-
+            const mid = new THREE.Vector3((x1+x2)/2, y, (z1+z2)/2);
             bond.position.copy(mid);
-            bond.lookAt(end);
-            bond.rotateX(Math.PI / 2);
-
+            bond.lookAt(new THREE.Vector3(x1, y, z1));
+            bond.rotateX(Math.PI/2);
             dnaGroup.add(bond);
         }
 
-        // Rotate slightly to show depth better initially
-        dnaGroup.rotation.z = Math.PI / 8;
-        dnaGroup.rotation.x = Math.PI / 6;
+        // Rotate DNA for better angle
+        dnaGroup.rotation.z = Math.PI / 6;
 
-        scene.add(dnaGroup);
+        // ==========================
+        // 2. Cellular Particles
+        // ==========================
+        const particleCount = 200;
+        const particles = [];
+        const particleGeo = new THREE.SphereGeometry(0.1, 8, 8);
+        const particleMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
 
+        for(let i=0; i<particleCount; i++) {
+            const p = new THREE.Mesh(particleGeo, particleMat);
+            const spread = 20;
+            p.position.set(
+                (Math.random() - 0.5) * spread,
+                (Math.random() - 0.5) * spread,
+                (Math.random() - 0.5) * spread
+            );
+            // Random velocity
+            p.userData = {
+                vel: new THREE.Vector3(
+                    (Math.random()-0.5) * 0.05,
+                    (Math.random()-0.5) * 0.05,
+                    (Math.random()-0.5) * 0.05
+                )
+            };
+            particleGroup.add(p);
+            particles.push(p);
+        }
+
+        // ==========================
+        // 3. Dynamic Proteins
+        // ==========================
+        // Create larger, more visible blob-like proteins
+        const proteinCount = 6;
+        const proteins = [];
+        
+        for(let i=0; i<proteinCount; i++) {
+            const protGroup = new THREE.Group();
+            // Use distinct bright colors
+            const hues = [0.1, 0.5, 0.8]; // Orange, Cyan, Magenta
+            const color = new THREE.Color().setHSL(hues[i % 3], 0.9, 0.6);
+            const mat = new THREE.MeshPhongMaterial({ 
+                color: color, 
+                shininess: 150,
+                emissive: color,
+                emissiveIntensity: 0.2
+            });
+            
+            // Core - Larger
+            protGroup.add(new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), mat));
+            
+            // Sub-units
+            for(let j=0; j<3; j++) {
+                const sub = new THREE.Mesh(new THREE.SphereGeometry(0.7, 16, 16), mat);
+                sub.position.set(
+                    (Math.random()-0.5), 
+                    (Math.random()-0.5), 
+                    (Math.random()-0.5)
+                ).normalize().multiplyScalar(1.0);
+                protGroup.add(sub);
+            }
+
+            // Orbit parameters - Closer range to ensure they cross the DNA
+            protGroup.userData = {
+                angle: (Math.PI * 2 * i) / proteinCount,
+                speed: 0.015 + Math.random() * 0.02,
+                radius: 5 + Math.random() * 4, // 5 to 9 range
+                yOffset: (Math.random() - 0.5) * 12
+            };
+            
+            proteinGroup.add(protGroup);
+            proteins.push(protGroup);
+        }
+
+        // ==========================
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-
+        // ==========================
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        
         const spotLight = new THREE.SpotLight(0xffffff, 1);
         spotLight.position.set(10, 20, 20);
-        spotLight.castShadow = true;
         scene.add(spotLight);
 
-        const pointLight = new THREE.PointLight(0xffffff, 0.8);
-        pointLight.position.set(-10, -10, 10);
-        scene.add(pointLight);
+        const blueLight = new THREE.PointLight(0x0088ff, 0.8, 20);
+        blueLight.position.set(-5, 0, 5);
+        scene.add(blueLight);
 
+        // ==========================
         // Animation Loop
+        // ==========================
         let animationId;
         const animate = () => {
             animationId = requestAnimationFrame(animate);
 
-            dnaGroup.rotation.y += 0.015; // Moderate spin
+            // 1. Rotate DNA (FASTER FOR DEV)
+            dnaGroup.rotation.y += 0.04;
+
+            // 2. Animate Particles (Brownian-ish motion)
+            particles.forEach(p => {
+                p.position.add(p.userData.vel);
+                // Boundary check (loop around)
+                if (p.position.length() > 15) {
+                    p.position.multiplyScalar(-0.9); 
+                }
+            });
+
+            // 3. Animate Proteins (Orbiting)
+            proteins.forEach(prot => {
+                const ud = prot.userData;
+                ud.angle += ud.speed;
+                prot.position.x = Math.cos(ud.angle) * ud.radius;
+                prot.position.z = Math.sin(ud.angle) * ud.radius;
+                prot.position.y = Math.sin(ud.angle * 2) * 3 + ud.yOffset; // Bobbing motion
+                
+                prot.rotation.x += 0.02;
+                prot.rotation.y += 0.03;
+            });
+
+            // Gentle World Rotation
+            worldGroup.rotation.y += 0.002;
 
             renderer.render(scene, camera);
         };
@@ -164,13 +246,26 @@ const DnaAnimation = () => {
             ref={mountRef}
             style={{
                 width: '100%',
-                height: '250px',
+                height: '350px', // Increased height for more impact
                 marginBottom: '20px',
-                borderRadius: '8px',
+                borderRadius: '12px',
                 overflow: 'hidden',
-                background: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)' // Cyber/Pastel gradient
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', // Deep dark blue/navy gradient
+                position: 'relative'
             }}
-        />
+        >
+            <div style={{
+                position: 'absolute',
+                top: 20,
+                left: 20,
+                color: 'rgba(255,255,255,0.7)',
+                fontFamily: 'sans-serif',
+                fontSize: '12px',
+                pointerEvents: 'none'
+            }}>
+                GENOME SEQUENCE // MONITORING ACTIVE
+            </div>
+        </div>
     );
 };
 

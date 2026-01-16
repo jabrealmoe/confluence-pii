@@ -995,20 +995,36 @@ async function handleComment(event) {
 
   // 1. Check if Regulated
   const settings = await storage.get('pii-settings-v1');
-  const regulatedGroup = settings?.regulatedGroupName;
+  
+  // Support both new Array format and old String format
+  let groupsToCheck = [];
+  if (settings?.regulatedGroups && Array.isArray(settings.regulatedGroups)) {
+    groupsToCheck = settings.regulatedGroups;
+  } else if (settings?.regulatedGroupName) {
+    groupsToCheck = [settings.regulatedGroupName];
+  }
 
-  if (!regulatedGroup) {
-    console.log("   ℹ️ No regulated group configured - skipping checks");
+  if (groupsToCheck.length === 0) {
+    console.log("   ℹ️ No regulated groups configured - skipping checks");
     return;
   }
 
-  const isRegulated = await isUserInGroup(authorId, regulatedGroup);
+  // Check membership in ANY of the configured groups
+  let isRegulated = false;
+  for (const group of groupsToCheck) {
+    if (await isUserInGroup(authorId, group)) {
+      isRegulated = true;
+      console.log(`   🛑 User is in regulated group: ${group}`);
+      break; 
+    }
+  }
+
   if (!isRegulated) {
-    console.log("   ✅ User is not regulated - allowed");
+    console.log("   ✅ User is not in any regulated groups - allowed");
     return;
   }
 
-  console.log(`   🛑 User IS regulated (${regulatedGroup}) - enforcing rules`);
+  console.log(`   🛑 User IS regulated - enforcing rules`);
 
   // 2. Block Mentions (@)
   const commentBody = event.comment.body?.storage?.value || "";

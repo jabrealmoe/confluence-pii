@@ -87,15 +87,69 @@ const App = () => {
             }}>
                 <h3 style={{ marginTop: 0, color: 'var(--ds-text, #172b4d)' }}>Regulated User Control</h3>
                 <p style={{ fontSize: '14px', color: 'var(--ds-text-subtle, #6b778c)' }}>
-                    Users in this group will be blocked from using @mentions and editing comments.
+                    Users in these groups will be blocked from using @mentions and editing comments.
                 </p>
 
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px', color: 'var(--ds-text, #172b4d)' }}>Regulated Group Name:</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px', color: 'var(--ds-text, #172b4d)' }}>Regulated Groups:</label>
+                
+                <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    marginBottom: '8px',
+                    padding: '4px 0'
+                }}>
+                    {(settings.regulatedGroups || (settings.regulatedGroupName ? [settings.regulatedGroupName] : [])).map((group, index) => (
+                        <div key={index} style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            backgroundColor: '#e3f2fd',
+                            color: '#0052cc',
+                            borderRadius: '16px',
+                            padding: '4px 12px',
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                            cursor: 'grab' // Hint at draggable nature (visual only for now)
+                        }}>
+                            {group}
+                            <span 
+                                onClick={() => {
+                                    const currentGroups = settings.regulatedGroups || (settings.regulatedGroupName ? [settings.regulatedGroupName] : []);
+                                    handleChange('regulatedGroups', currentGroups.filter((_, i) => i !== index));
+                                }}
+                                style={{
+                                    marginLeft: '8px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    color: '#0052cc',
+                                    opacity: 0.7
+                                }}
+                                onMouseEnter={(e) => e.target.style.opacity = 1}
+                                onMouseLeave={(e) => e.target.style.opacity = 0.7}
+                            >
+                                ×
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
                 <input
                     type="text"
-                    value={settings.regulatedGroupName || ''}
-                    onChange={(e) => handleChange('regulatedGroupName', e.target.value)}
-                    placeholder="e.g., contractors"
+                    placeholder="Type group name and press Enter..."
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = e.target.value.trim();
+                            if (val) {
+                                const currentGroups = settings.regulatedGroups || (settings.regulatedGroupName ? [settings.regulatedGroupName] : []);
+                                if (!currentGroups.includes(val)) {
+                                    handleChange('regulatedGroups', [...currentGroups, val]);
+                                }
+                                e.target.value = '';
+                            }
+                        }
+                    }}
                     style={{
                         padding: '10px',
                         width: '100%',
