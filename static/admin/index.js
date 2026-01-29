@@ -9,13 +9,18 @@ view.theme.enable();
 
 const App = () => {
     const [settings, setSettings] = useState(null);
+    const [version, setVersion] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
     useEffect(() => {
-        invoke('getSettings').then((data) => {
-            setSettings(data || {}); // Ensure object
+        Promise.all([
+            invoke('getSettings'),
+            invoke('getVersion')
+        ]).then(([settingsData, versionData]) => {
+            setSettings(settingsData || {});
+            setVersion(versionData);
             setLoading(false);
         });
     }, []);
@@ -192,6 +197,19 @@ const App = () => {
                     {saving ? 'Saving...' : saved ? '✅ Saved Successfully' : 'Save Settings'}
                 </button>
             </div>
+
+            {version && (
+                <div style={{ 
+                    marginTop: '40px', 
+                    paddingTop: '20px', 
+                    borderTop: '1px solid var(--ds-border, #dfe1e6)',
+                    textAlign: 'center',
+                    color: 'var(--ds-text-subtle, #6b778c)',
+                    fontSize: '12px'
+                }}>
+                    PII Protection v{version.version}
+                </div>
+            )}
         </div>
     );
 };
