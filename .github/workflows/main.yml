@@ -18,7 +18,7 @@ jobs:
   # Stage 1: Quality Assurance (Unit Tests & Linting)
   # ------------------------------------------------------------------
   qa:
-    name: 1. QA (Lint & Unit)
+    name: 1. QA (Lint & Unit Tests)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,12 +27,28 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-      - name: Install
+      - name: Install Dependencies
         run: npm ci
-      - name: Lint
+      - name: Lint Code
         run: npm run lint
-      - name: Unit Tests
+      - name: Run Unit Tests with Coverage
         run: npm run test:unit
+      - name: Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: coverage/
+          retention-days: 30
+      - name: Coverage Summary
+        if: always()
+        run: |
+          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
 
   # ------------------------------------------------------------------
   # Stage 2: Development Deployment
