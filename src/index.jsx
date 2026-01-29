@@ -88,6 +88,19 @@ export async function run(event) {
   }
   */
 
+  // Step 4: Scan Version History for PII
+  console.log("\n📚 Step 4: Scanning page version history for PII...");
+  const versionPiiFindings = await checkAllPageVersionsForPii(pageId);
+  
+  if (versionPiiFindings.length > 0) {
+    console.log(`🚨 Found PII in ${versionPiiFindings.length} historical version(s)!`);
+    versionPiiFindings.forEach(version => {
+      console.log(`   - Version ${version.version}: ${version.piiCount} PII instance(s) - ${version.piiTypes.join(', ')}`);
+    });
+  } else {
+    console.log("✅ No PII found in version history");
+  }
+
   const otherPagesPii = []; // Empty array since we are skipping the scan
 
   // Step 5: Report all findings
@@ -95,6 +108,7 @@ export async function run(event) {
   await reportPiiFindings({
     currentPage,
     previewPiiHits,
+    versionPiiFindings,
     otherPagesPii
   });
 
@@ -458,7 +472,7 @@ function aggregateHits(hits) {
    REPORT PII FINDINGS
    Compiles and sends PII findings report
 ----------------------------------------- */
-async function reportPiiFindings({ currentPage, previewPiiHits, otherPagesPii }) {
+async function reportPiiFindings({ currentPage, previewPiiHits, versionPiiFindings = [], otherPagesPii }) {
   const report = {
     timestamp: new Date().toISOString(),
     currentPage: {
@@ -470,6 +484,14 @@ async function reportPiiFindings({ currentPage, previewPiiHits, otherPagesPii })
         type: hit.type,
         count: hit.count,
         examples: hit.matches.slice(0, 3).map(m => maskSensitiveData(m, hit.type))
+      })),
+      versionHistory: versionPiiFindings.map(version => ({
+        version: version.version,
+        createdAt: version.createdAt,
+        createdBy: version.createdBy,
+        piiTypes: version.piiTypes,
+        piiCount: version.piiCount,
+        piiDetails: version.piiDetails
       }))
     },
     otherPagesWithPii: otherPagesPii.map(page => ({
@@ -496,8 +518,10 @@ async function reportPiiFindings({ currentPage, previewPiiHits, otherPagesPii })
     })),
     summary: {
       totalPiiTypesInPreview: previewPiiHits.length,
+      totalVersionsWithPii: versionPiiFindings.length,
       totalOtherPagesWithPii: otherPagesPii.length,
       totalPiiInstances: previewPiiHits.reduce((sum, hit) => sum + hit.count, 0) +
+        versionPiiFindings.reduce((sum, v) => sum + v.piiCount, 0) +
         otherPagesPii.reduce((sum, page) => {
           const titlePiiCount = page.titlePii.reduce((s, h) => s + h.count, 0);
           const contentPiiCount = Array.isArray(page.contentPii) && page.contentPii.length > 0 && page.contentPii[0].version
@@ -512,8 +536,16 @@ async function reportPiiFindings({ currentPage, previewPiiHits, otherPagesPii })
   console.log("\n📊 PII DETECTION REPORT:");
   console.log(`   Current Page: "${report.currentPage.title}"`);
   console.log(`   PII Types in Preview: ${report.summary.totalPiiTypesInPreview}`);
+  console.log(`   Versions with PII: ${report.summary.totalVersionsWithPii}`);
   console.log(`   Other Pages with PII: ${report.summary.totalOtherPagesWithPii}`);
   console.log(`   Total PII Instances: ${report.summary.totalPiiInstances}`);
+
+  if (versionPiiFindings.length > 0) {
+    console.log("\n   Version History with PII:");
+    versionPiiFindings.forEach(version => {
+      console.log(`     - Version ${version.version} (${version.piiCount} PII instances): ${version.piiTypes.join(', ')}`);
+    });
+  }
 
   if (otherPagesPii.length > 0) {
     console.log("\n   Other Pages with PII:");
