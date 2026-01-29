@@ -1,29 +1,18 @@
 import Resolver from '@forge/resolver';
-import { storage } from '@forge/api';
+import { configService } from './services/config-service';
 
 const resolver = new Resolver();
-const STORAGE_KEY = 'pii-settings-v1';
 
 // Import version from package.json
 const packageJson = require('../package.json');
 
 resolver.define('getSettings', async () => {
-    const stored = await storage.get(STORAGE_KEY);
-    return stored || {
-        email: true,
-        phone: true,
-        creditCard: true,
-        ssn: true,
-        passport: true,
-        driversLicense: true,
-        enableQuarantine: false
-    };
+    return await configService.getSettings();
 });
 
 resolver.define('saveSettings', async (req) => {
     const settings = req.payload;
-    await storage.set(STORAGE_KEY, settings);
-    return settings;
+    return await configService.saveSettings(settings);
 });
 
 resolver.define('getVersion', async () => {

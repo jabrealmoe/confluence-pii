@@ -5,7 +5,6 @@ modules:
       events:
         - avi:confluence:created:page
         - avi:confluence:updated:page
-        - avi:confluence:liked:page
   function:
     - key: main
       handler: index.run
