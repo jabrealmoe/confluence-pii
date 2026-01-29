@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rm -rf .parcel-cache && echo '--- React Cache ---' && ls -R node_modules/react/cjs/ && echo '--- End React Cache ---' && parcel build index.html --dist-dir ../admin-build --public-url ./"
+    "build": "rm -rf .parcel-cache && parcel build index.html --dist-dir ../admin-build --public-url ./"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +13,7 @@
   "dependencies": {
     "@atlaskit/css-reset": "^7.3.10",
     "@atlaskit/tokens": "^9.1.2",
-    "@forge/bridge": "^5.10.2",
+    "@forge/bridge": "5.10.2",
     "parcel": "^2.16.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",
