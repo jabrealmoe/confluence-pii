@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import ForgeReconciler, { Text, Form, CheckboxGroup, Checkbox, Stack, Heading } from '@forge/react';
+import ForgeReconciler, { Text, Button, Toggle, Stack, Heading } from '@forge/react';
 import { storage } from '@forge/api';
 
 const STORAGE_KEY = 'pii-settings-v1';
@@ -22,21 +22,15 @@ const App = () => {
         });
     }, []);
 
-    const onSubmit = async (formData) => {
-        const piiTypes = formData.piiTypes || [];
-        const actions = formData.actions || [];
-        const newSettings = {
-            email: piiTypes.includes('email'),
-            phone: piiTypes.includes('phone'),
-            creditCard: piiTypes.includes('creditCard'),
-            ssn: piiTypes.includes('ssn'),
-            passport: piiTypes.includes('passport'),
-            driversLicense: piiTypes.includes('driversLicense'),
-            enableQuarantine: actions.includes('quarantine')
-        };
+    const handleToggle = (key) => {
+        setSettings(prev => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
+    };
 
-        await storage.set(STORAGE_KEY, newSettings);
-        setSettings(newSettings);
+    const handleSave = async () => {
+        await storage.set(STORAGE_KEY, settings);
     };
 
     if (!settings) {
@@ -44,28 +38,68 @@ const App = () => {
     }
 
     return (
-        <Stack space="space.200">
-            <Heading as="h2">PII Configuration</Heading>
-            <Text>Use the settings below to control which types of PII are automatically detected and acted upon.</Text>
+        <Stack space="space.400">
+            {/* Detection Rules Section */}
+            <Stack space="space.200">
+                <Heading as="h2">PII Detection Rules</Heading>
+                <Text>
+                    Select which types of personally identifiable information (PII) should be automatically 
+                    detected in Confluence pages. When detected, these will trigger configured actions below.
+                </Text>
+            </Stack>
 
-            <Form onSubmit={onSubmit} submitButtonText="Save Configuration">
-                <CheckboxGroup name="piiTypes" label="Enabled PII Detectors">
-                    <Checkbox defaultChecked={settings.email} value="email" label="Email Addresses" />
-                    <Checkbox defaultChecked={settings.phone} value="phone" label="Phone Numbers" />
-                    <Checkbox defaultChecked={settings.creditCard} value="creditCard" label="Credit Card Numbers" />
-                    <Checkbox defaultChecked={settings.ssn} value="ssn" label="Social Security Numbers (SSN)" />
-                    <Checkbox defaultChecked={settings.passport} value="passport" label="Passport Numbers" />
-                    <Checkbox defaultChecked={settings.driversLicense} value="driversLicense" label="Driver's Licenses" />
-                </CheckboxGroup>
+            <Stack space="space.200">
+                <Toggle 
+                    isChecked={settings.email}
+                    onChange={() => handleToggle('email')}
+                    label="Email Addresses"
+                />
+                <Toggle 
+                    isChecked={settings.phone}
+                    onChange={() => handleToggle('phone')}
+                    label="Phone Numbers"
+                />
+                <Toggle 
+                    isChecked={settings.creditCard}
+                    onChange={() => handleToggle('creditCard')}
+                    label="Credit Card Numbers"
+                />
+                <Toggle 
+                    isChecked={settings.ssn}
+                    onChange={() => handleToggle('ssn')}
+                    label="Social Security Numbers (SSN)"
+                />
+                <Toggle 
+                    isChecked={settings.passport}
+                    onChange={() => handleToggle('passport')}
+                    label="Passport Numbers"
+                />
+                <Toggle 
+                    isChecked={settings.driversLicense}
+                    onChange={() => handleToggle('driversLicense')}
+                    label="Driver's Licenses"
+                />
+            </Stack>
 
-                <CheckboxGroup name="actions" label="Automated Actions">
-                    <Checkbox 
-                        defaultChecked={settings.enableQuarantine} 
-                        value="quarantine" 
-                        label="Quarantine Pages (Restrict access to page author only when PII is detected)" 
-                    />
-                </CheckboxGroup>
-            </Form>
+            {/* Actions Section - Visually Separated */}
+            <Stack space="space.200">
+                <Heading as="h3">Automated Actions</Heading>
+                <Text>
+                    Configure what actions should be taken when PII is detected on a page.
+                </Text>
+            </Stack>
+
+            <Stack space="space.200">
+                <Toggle 
+                    isChecked={settings.enableQuarantine}
+                    onChange={() => handleToggle('enableQuarantine')}
+                    label="Enable automatic quarantine - Restrict page access to author only when PII is detected"
+                />
+            </Stack>
+
+            <Button appearance="primary" onClick={handleSave}>
+                Save Configuration
+            </Button>
         </Stack>
     );
 };
