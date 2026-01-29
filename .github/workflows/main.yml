@@ -80,7 +80,9 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git fetch origin staging
-          git checkout staging
+          # clean the workspace and force checkout to avoid conflicts with build artifacts
+          git clean -fd
+          git checkout -f staging
           git merge development --allow-unrelated-histories -X theirs -m "chore(release): Promote Development to Staging"
           git push origin staging
 
@@ -131,7 +133,9 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git fetch origin main
-          git checkout main
+          # clean the workspace and force checkout
+          git clean -fd
+          git checkout -f main
           git merge staging --allow-unrelated-histories -X theirs -m "chore(release): Promote Staging to Production"
           git push origin main
 
