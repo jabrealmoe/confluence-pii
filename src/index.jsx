@@ -2,7 +2,7 @@ import api, { route, storage } from "@forge/api";
 
 
 
-export async function run(event, context) {
+export async function run(event) {
   console.log("🔔 PII Detection triggered for Confluence page");
 
   const pageId = event?.content?.id;
@@ -160,11 +160,7 @@ function extractContentPreview(body) {
   return textContent;
 }
 
-/* -----------------------------------------
-   SCAN OTHER PAGES IN SPACE
-   Scans titles and content of other pages in the same space
------------------------------------------ */
-async function scanOtherPagesInSpace(spaceKey, spaceId, excludePageId) {
+
   console.log(`🔍 Fetching all pages in space (key: ${spaceKey || 'N/A'}, ID: ${spaceId || 'N/A'})`);
 
   const allPiiFindings = [];
@@ -307,14 +303,7 @@ async function scanOtherPagesInSpace(spaceKey, spaceId, excludePageId) {
       }
     }
 
-    console.log(`\n✅ Scan complete. Found PII in ${allPiiFindings.length} other pages`);
-    return allPiiFindings;
 
-  } catch (error) {
-    console.log(`❌ Error scanning other pages: ${error.message}`);
-    return allPiiFindings;
-  }
-}
 
 /* -----------------------------------------
    CHECK ALL PAGE VERSIONS FOR PII
@@ -608,10 +597,7 @@ function aggregateHits(hits) {
   return Object.values(summary);
 }
 
-/* -----------------------------------------
-   FILTER FALSE POSITIVES (Deprecated/Integrated)
------------------------------------------ */
-function filterFalsePositives(matches, type, fullText) {
+
   return matches.filter(match => {
     if (type === 'ssn') {
       return /^\d{3}[-\s]?\d{2}[-\s]?\d{4}$/.test(match.trim());
@@ -630,9 +616,7 @@ function filterFalsePositives(matches, type, fullText) {
       });
     }
 
-    return true;
-  });
-}
+
 
 /* -----------------------------------------
    REPORT PII FINDINGS
@@ -751,69 +735,7 @@ async function addPageLabels(pageId, labels) {
   }
 }
 
-/* -----------------------------------------
-   SET PAGE RESTRICTIONS (QUARANTINE)
-   Restricts read/update access to a specific user
------------------------------------------ */
-async function setPageRestrictions(pageId, accountId) {
-  try {
-    // We must include the App itself in the restrictions, otherwise the API rejects the request
-    // preventing the app from "locking itself out"
-    let appAccountId = null;
-    try {
-      const meResponse = await api.asApp().requestConfluence(route`/wiki/rest/api/user/current`);
-      if (meResponse.ok) {
-        const me = await meResponse.json();
-        appAccountId = me.accountId;
-      }
-    } catch (e) {
-      console.log(`   ⚠️ Could not fetch App user details: ${e.message}`);
-    }
 
-    const usersToAllow = [{ type: "known", accountId: accountId }];
-
-    // Add the App user if we found it
-    if (appAccountId && appAccountId !== accountId) {
-      usersToAllow.push({ type: "known", accountId: appAccountId });
-    }
-
-    const body = [
-      {
-        operation: "read",
-        restrictions: {
-          user: usersToAllow,
-          group: []
-        }
-      },
-      {
-        operation: "update",
-        restrictions: {
-          user: usersToAllow,
-          group: []
-        }
-      }
-    ];
-
-    const response = await api.asApp().requestConfluence(
-      route`/wiki/rest/api/content/${pageId}/restriction`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      }
-    );
-
-    if (response.ok) {
-      console.log(`   🔒 Page QUARANTINED (Restricted to user: ${accountId} + App)`);
-    } else {
-      console.log(`   ❌ Failed to quarantine page: ${response.status}`);
-      const text = await response.text();
-      console.log(`      Error: ${text}`);
-    }
-  } catch (error) {
-    console.log(`   ❌ Error quarantining page: ${error.message}`);
-  }
-}
 
 /* -----------------------------------------
    ADD COLORED BANNER & HIGHLIGHT PII
@@ -974,95 +896,7 @@ function maskSensitiveData(data, type) {
 
 
 
-/* -----------------------------------------
-   REGULATED USER HANDLER
-   Enforces:
-   1. No @mentions
-   2. No Edits (Reverts changes)
------------------------------------------ */
-async function handleComment(event) {
-  const commentId = event.comment.id;
-  const authorId = event.comment.author.accountId;
-  const eventType = event.eventType; // 'avi:confluence:comment:created' or 'updated'
 
-  console.log(`💬 Processing comment ${commentId} (${eventType}) by ${authorId}`);
-
-  // 1. Check if Regulated
-  const settings = await storage.get('pii-settings-v1');
-  
-  // Support both new Array format and old String format
-  let groupsToCheck = [];
-  if (settings?.regulatedGroups && Array.isArray(settings.regulatedGroups)) {
-    groupsToCheck = settings.regulatedGroups;
-  } else if (settings?.regulatedGroupName) {
-    groupsToCheck = [settings.regulatedGroupName];
-  }
-
-  if (groupsToCheck.length === 0) {
-    console.log("   ℹ️ No regulated groups configured - skipping checks");
-    return;
-  }
-
-  // Check membership in ANY of the configured groups
-  let isRegulated = false;
-  for (const group of groupsToCheck) {
-    if (await isUserInGroup(authorId, group)) {
-      isRegulated = true;
-      console.log(`   🛑 User is in regulated group: ${group}`);
-      break; 
-    }
-  }
-
-  if (!isRegulated) {
-    console.log("   ✅ User is not in any regulated groups - allowed");
-    return;
-  }
-
-  console.log(`   🛑 User IS regulated - enforcing rules`);
-
-  // 2. Block Mentions (@)
-  const commentBody = event.comment.body?.storage?.value || "";
-
-  // Basic check for mention/link structures
-  const hasMention = commentBody.includes("ri:user") || commentBody.includes("ri:account-id");
-
-  if (hasMention) {
-    console.log("   🛑 Mention detected! Redacting...");
-
-    // Replace mention tags with [REDACTED]
-    // Regex for standard ADF/Storage mention
-    const redactedBody = commentBody.replace(/<ac:link>.*?<ri:user.*?<\/ac:link>/g,
-      '<span style="color:red; font-weight:bold;">[MENTIONS NOT ALLOWED]</span>');
-
-    // Update the comment with redacted body
-    await api.asApp().requestConfluence(route`/wiki/api/v2/comments/${commentId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: commentId,
-        status: "current",
-        title: event.comment.title,
-        body: {
-          representation: "storage",
-          value: redactedBody
-        },
-        version: {
-          number: event.comment.version.number + 1,
-          message: "Auto-redaction: Regulated User Policy"
-        }
-      })
-    });
-    console.log("   ✅ Comment sanitized");
-  } else {
-    // If no mentions, but it was an EDIT, we might want to revert?
-    // User asked "Can't edit".
-    if (eventType.includes('updated')) {
-      console.log("   ⚠️ Regulated User Edited Comment - (Warning Only for MVP: 'Edits Restricted')");
-      // For MVP we won't revert blindly to avoid destroying valid content if no mentions.
-      // But we could append a warning.
-    }
-  }
-}
 
 // Helper: Check Group Membership
 async function isUserInGroup(accountId, groupName) {
