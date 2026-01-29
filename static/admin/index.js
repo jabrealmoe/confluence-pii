@@ -3,6 +3,7 @@ import { invoke, view } from '@forge/bridge';
 import { createRoot } from 'react-dom/client';
 import '@atlaskit/css-reset';
 import DnaAnimation from './DnaAnimation';
+import appIcon from './app-icon.png';
 
 // Enable Confluence Theme Sync
 view.theme.enable();
@@ -43,6 +44,14 @@ const App = () => {
 
     return (
         <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', color: 'var(--ds-text, #172b4d)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                 <img src={appIcon} alt="App Icon" style={{ width: '64px', height: '64px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />
+                 <div>
+                     <h1 style={{ margin: 0, fontSize: '28px', color: 'var(--ds-text, #172b4d)' }}>PII Protection</h1>
+                     <p style={{ margin: 0, color: 'var(--ds-text-subtle, #6b778c)', fontSize: '14px' }}>Advanced Data Security & Privacy</p>
+                 </div>
+            </div>
+
             <DnaAnimation />
 
             <div style={{ marginBottom: '20px' }}>
