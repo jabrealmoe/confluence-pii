@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import ForgeReconciler, { Text, Form, CheckboxGroup, Checkbox, Button, Stack, Heading, useForm } from '@forge/react';
+import ForgeReconciler, { Text, Form, CheckboxGroup, Checkbox, Stack, Heading } from '@forge/react';
 import { storage } from '@forge/api';
 
 const STORAGE_KEY = 'pii-settings-v1';
