@@ -20,6 +20,7 @@
   "devDependencies": {
     "@babel/preset-react": "^7.28.5",
     "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^4.6.0"
   },
   "dependencies": {
