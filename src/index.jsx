@@ -716,8 +716,6 @@ async function reportPiiFindings({ currentPage, previewPiiHits, otherPagesPii })
     });
   }
 
-  // Send to n8n if webhook URL is configured
-  // N8n integration removed.
   console.log("\n✅ PII findings logged. No external report sent.");
   console.log("   Report data:", JSON.stringify(report, null, 2));
 }
@@ -974,10 +972,6 @@ function maskSensitiveData(data, type) {
   return '***';
 }
 
-/* -----------------------------------------
-   CALL n8n WORKFLOW
-   Sends payload to n8n webhook
------------------------------------------ */
 
 
 /* -----------------------------------------
