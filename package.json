@@ -10,7 +10,7 @@
   "scripts": {
     "lint": "eslint src/**/* || npm run --silent hook-errors",
     "hook-errors": "echo '\\x1b[31mThe build failed because a Forge UI hook is being used incorrectly. Forge UI hooks follow the same rules as React Hooks but have their own API definitions. See the Forge documentation for details on how to use Forge UI hooks.\n' && exit 1",
-    "build": "cd static/admin && npm install && npm run build",
+    "build": "cd static/admin && npm ci && npm run build",
     "test:unit": "echo 'No unit tests yet' && exit 0",
     "test:integration": "echo 'No integration tests yet' && exit 0",
     "test:e2e": "echo 'No e2e tests yet' && exit 0",

@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rm -rf .parcel-cache && parcel build index.html --dist-dir ../admin-build --public-url ./"
+    "build": "rm -rf .parcel-cache && echo '--- Cache Debug ---' && ls -R node_modules/react/cjs/ && ls -R node_modules/scheduler/cjs/ && echo '--- End Cache Debug ---' && parcel build index.html --dist-dir ../admin-build --public-url ./"
   },
   "keywords": [],
   "author": "",
