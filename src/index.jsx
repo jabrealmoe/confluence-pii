@@ -78,15 +78,18 @@ export async function run(event) {
   // Add Visual Colored Label AND Update Body with Highlights
   await addColoredBanner(pageId, currentPage, previewPiiHits, highlightedBody);
 
-  // Quarantine (Restricted access) - Disabled by User Request
-  /* 
-  const controllingUser = event?.atlassianId || currentPage.authorId;
-  if (controllingUser) {
-    await setPageRestrictions(pageId, controllingUser);
+  // Quarantine (Restricted access) - Based on Admin Settings
+  if (piiSettings?.enableQuarantine) {
+    console.log("   🔒 Quarantine enabled - restricting page access...");
+    const controllingUser = event?.atlassianId || currentPage.authorId;
+    if (controllingUser) {
+      await setPageRestrictions(pageId, controllingUser);
+    } else {
+      console.log("   ⚠️ Could not determine user for quarantine - skipping restrictions");
+    }
   } else {
-    console.log("⚠️ Could not determine user for quarantine - skipping restrictions");
+    console.log("   ℹ️ Quarantine disabled in settings - skipping page restrictions");
   }
-  */
 
   // Step 4: Scan Version History for PII
   console.log("\n📚 Step 4: Scanning page version history for PII...");
@@ -763,7 +766,69 @@ function maskSensitiveData(data, type) {
 }
 
 
+/* -----------------------------------------
+   SET PAGE RESTRICTIONS (QUARANTINE)
+   Restricts read/update access to a specific user
+----------------------------------------- */
+async function setPageRestrictions(pageId, accountId) {
+  try {
+    // We must include the App itself in the restrictions, otherwise the API rejects the request
+    // preventing the app from "locking itself out"
+    let appAccountId = null;
+    try {
+      const meResponse = await api.asApp().requestConfluence(route`/wiki/rest/api/user/current`);
+      if (meResponse.ok) {
+        const me = await meResponse.json();
+        appAccountId = me.accountId;
+      }
+    } catch (e) {
+      console.log(`   ⚠️ Could not fetch App user details: ${e.message}`);
+    }
 
+    const usersToAllow = [{ type: "known", accountId: accountId }];
+
+    // Add the App user if we found it
+    if (appAccountId && appAccountId !== accountId) {
+      usersToAllow.push({ type: "known", accountId: appAccountId });
+    }
+
+    const body = [
+      {
+        operation: "read",
+        restrictions: {
+          user: usersToAllow,
+          group: []
+        }
+      },
+      {
+        operation: "update",
+        restrictions: {
+          user: usersToAllow,
+          group: []
+        }
+      }
+    ];
+
+    const response = await api.asApp().requestConfluence(
+      route`/wiki/rest/api/content/${pageId}/restriction`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }
+    );
+
+    if (response.ok) {
+      console.log(`   🔒 Page QUARANTINED (Restricted to user: ${accountId} + App)`);
+    } else {
+      console.log(`   ❌ Failed to quarantine page: ${response.status}`);
+      const text = await response.text();
+      console.log(`      Error: ${text}`);
+    }
+  } catch (error) {
+    console.log(`   ❌ Error quarantining page: ${error.message}`);
+  }
+}
 
 
 // Helper: Check Group Membership

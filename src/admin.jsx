@@ -16,20 +16,23 @@ const App = () => {
                 creditCard: true,
                 ssn: true,
                 passport: true,
-                driversLicense: true
+                driversLicense: true,
+                enableQuarantine: false
             });
         });
     }, []);
 
     const onSubmit = async (formData) => {
         const piiTypes = formData.piiTypes || [];
+        const actions = formData.actions || [];
         const newSettings = {
             email: piiTypes.includes('email'),
             phone: piiTypes.includes('phone'),
             creditCard: piiTypes.includes('creditCard'),
             ssn: piiTypes.includes('ssn'),
             passport: piiTypes.includes('passport'),
-            driversLicense: piiTypes.includes('driversLicense')
+            driversLicense: piiTypes.includes('driversLicense'),
+            enableQuarantine: actions.includes('quarantine')
         };
 
         await storage.set(STORAGE_KEY, newSettings);
@@ -53,6 +56,14 @@ const App = () => {
                     <Checkbox defaultChecked={settings.ssn} value="ssn" label="Social Security Numbers (SSN)" />
                     <Checkbox defaultChecked={settings.passport} value="passport" label="Passport Numbers" />
                     <Checkbox defaultChecked={settings.driversLicense} value="driversLicense" label="Driver's Licenses" />
+                </CheckboxGroup>
+
+                <CheckboxGroup name="actions" label="Automated Actions">
+                    <Checkbox 
+                        defaultChecked={settings.enableQuarantine} 
+                        value="quarantine" 
+                        label="Quarantine Pages (Restrict access to page author only when PII is detected)" 
+                    />
                 </CheckboxGroup>
             </Form>
         </Stack>
