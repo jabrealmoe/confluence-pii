@@ -300,6 +300,14 @@ To prevent CI/CD failures and maintain high code quality, we use an AI-assisted 
 
 Internal developers using AI agents should ensure the `quality_guardrails` skill is active to automatically enforce these checks during the development lifecycle.
 
+## 🛠️ Project Blueprint & AI Prompt
+
+For deep technical analysis, architectural diagrams, or to recreate this project from scratch using AI assistants, refer to the:
+
+### 📄 [CONFLUENCE_PII.MD](./confluence_pii.md)
+
+This document contains a high-density "Master Prompt" that encapsulates the entire functional logic, service architecture, and administrative UI requirements of the suite.
+
 ## Security & Privacy
 
 - **No External Calls**: All processing happens within Atlassian's infrastructure
