@@ -185,16 +185,17 @@ const App = () => {
                             </div>
                             <div style={{ 
                                 fontSize: '11px',
-                                fontWeight: '700',
+                                fontWeight: '800',
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.5px',
-                                padding: '4px 10px',
+                                letterSpacing: '0.8px',
+                                padding: '4px 12px',
                                 borderRadius: '12px',
-                                backgroundColor: 'var(--ds-background-accent-gray-subtle, #42526e)',
+                                background: 'linear-gradient(135deg, #FF0080 0%, #7928CA 100%)',
                                 color: 'white',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
                                 display: 'inline-flex',
-                                alignItems: 'center'
+                                alignItems: 'center',
+                                border: '1px solid rgba(255,255,255,0.2)'
                             }}>
                                 Rank: {level.rank}
                             </div>
@@ -268,18 +269,20 @@ const App = () => {
                             />
                         </div>
                         
-                        <div>
-                            <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: 'var(--ds-text, #172b4d)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <label style={{ fontSize: '13px', fontWeight: 'bold', whiteSpace: 'nowrap', color: 'var(--ds-text, #172b4d)' }}>
                                 Detection Keywords:
                             </label>
                             <div style={{ 
                                 fontSize: '12px', 
                                 color: 'var(--ds-text-subtle, #6b778c)',
                                 fontFamily: 'monospace',
-                                backgroundColor: 'var(--ds-background-neutral, #f4f5f7)',
-                                padding: '8px',
+                                backgroundColor: 'rgba(255,255,255,0.5)',
+                                padding: '4px 8px',
                                 borderRadius: '4px',
-                                wordBreak: 'break-all'
+                                wordBreak: 'break-all',
+                                flex: 1,
+                                border: '1px dashed rgba(0,0,0,0.1)'
                             }}>
                                 {level.keywords.join(', ')}
                             </div>
