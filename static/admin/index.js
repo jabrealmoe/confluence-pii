@@ -199,7 +199,12 @@ const App = () => {
                                 letterSpacing: '0.8px',
                                 padding: '4px 12px',
                                 borderRadius: '12px',
-                                background: 'linear-gradient(135deg, #FF0080 0%, #7928CA 100%)',
+                                background: 
+                                    level.rank === 5 ? 'linear-gradient(135deg, #F9D423 0%, #FF4E50 100%)' : // Top Secret
+                                    level.rank === 4 ? 'linear-gradient(135deg, #FF4B2B 0%, #FF416C 100%)' : // Secret
+                                    level.rank === 3 ? 'linear-gradient(135deg, #00B4DB 0%, #0083B0 100%)' : // Confidential
+                                    level.rank === 2 ? 'linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)' : // Internal
+                                    'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)', // Unclassified
                                 color: 'white',
                                 boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
                                 display: 'inline-flex',
