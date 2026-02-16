@@ -248,17 +248,21 @@ const App = () => {
             let aggregatedHits = {};
             let activeCount = 0;
             let quarantinedCount = 0;
+            let pagesProcessed = 0;
+            let cursor = null;
             const batchSize = 10;
 
-            for (let i = 0; i < totalPages; i += batchSize) {
-                const results = await invoke('scanSiteBatch', { start: i, limit: batchSize });
+            do {
+                const results = await invoke('scanSiteBatch', { cursor, limit: batchSize });
                 activeCount += results.stats.active;
                 quarantinedCount += results.stats.quarantined;
                 Object.entries(results.stats.hitsByType).forEach(([type, count]) => {
                     aggregatedHits[type] = (aggregatedHits[type] || 0) + count;
                 });
-                setScanProgress(Math.min(100, Math.round(((i + batchSize) / totalPages) * 100)));
-            }
+                pagesProcessed += results.pagesScanned || batchSize;
+                cursor = results.nextCursor || null;
+                setScanProgress(Math.min(100, Math.round((pagesProcessed / totalPages) * 100)));
+            } while (cursor);
 
             setScanResults({ active: activeCount, quarantined: quarantinedCount, hitsByType: aggregatedHits, total: totalPages });
             fetchIncidents(); // Refresh log after scan

@@ -26,8 +26,8 @@ resolver.define('getSiteStats', async () => {
 });
 
 resolver.define('scanSiteBatch', async (req) => {
-    const { start, limit } = req.payload;
-    return await siteScanService.scanBatch(start, limit);
+    const { cursor, limit } = req.payload;
+    return await siteScanService.scanBatch(cursor || null, limit);
 });
 
 import { storage } from '@forge/api';
