@@ -1,7 +1,7 @@
 import { piiDetectionService } from './pii-service';
 import { pageService } from './page-service';
 import { detectPii } from '../utils/pii-detector';
-import api, { route } from '@forge/api';
+
 
 jest.mock('../utils/pii-detector');
 jest.mock('./page-service');
