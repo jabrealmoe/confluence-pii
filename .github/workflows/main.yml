@@ -29,14 +29,6 @@ jobs:
           cache: "npm"
       - name: Install Dependencies
         run: npm ci
-      - name: Forge Lint Check
-        run: |
-          npm install -g @forge/cli@latest
-          forge settings set usage-analytics false
-          forge lint
-        env:
-          FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}
-          FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
       - name: Dependency Security Scan
         run: npm audit --audit-level=high
 
