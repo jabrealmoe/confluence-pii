@@ -12,14 +12,24 @@ export async function run(event) {
   const pageId = event?.content?.id;
   if (!pageId) return;
 
-  // 🛡️ DEBOUNCE GUARD
+  // Recommendation 3: Version-Aware Debouncing (Metadata Tags)
+  // Only scan if the version has changed
+  const currentVersion = event?.content?.version?.number || 0;
+  const lastScannedVersion = await pageService.getPageProperty(pageId, 'last-pii-scan-version');
+  
+  if (lastScannedVersion && currentVersion <= lastScannedVersion) {
+      console.log(`⏩ Skipping scan: Version ${currentVersion} already analyzed for page ${pageId}`);
+      return;
+  }
+
+  // Fallback storage debounce for rapid edits within the same version if applicable
   const lastScanKey = `last-scan-${pageId}`;
   const lastScanTime = await storage.get(lastScanKey);
   const now = Date.now();
-  if (lastScanTime && now - lastScanTime < 5000) return;
+  if (lastScanTime && now - lastScanTime < 3000) return;
   await storage.set(lastScanKey, now);
 
-  console.log(`🚀 Scanning page ${pageId}...`);
+  console.log(`🚀 Scanning page ${pageId} (Version ${currentVersion})...`);
 
   try {
     const settings = await configService.getSettings();

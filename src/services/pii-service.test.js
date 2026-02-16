@@ -62,6 +62,7 @@ describe('PiiDetectionService', () => {
 
   describe('scanHistoricalVersions', () => {
     it('should scan versions and returns findings', async () => {
+      pageService.getPageProperty.mockResolvedValue(0);
       mockRequestConfluence.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ results: [{ number: 1 }, { number: 2 }] })

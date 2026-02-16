@@ -22,19 +22,19 @@ class PageService {
   }
 
   /**
-   * Adds labels to a page
+   * Adds labels to a page (API V2)
    */
   async addLabels(pageId, labels) {
     try {
-      // Forge API labels are still in REST v1
       const response = await api.asApp().requestConfluence(
-        route`/wiki/rest/api/content/${pageId}/label`,
+        route`/wiki/api/v2/pages/${pageId}/labels`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(labels.map(label => ({ name: label })))
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(labels.map(label => ({
+              prefix: 'global',
+              name: label.replace(/\s+/g, '-')
+          })))
         }
       );
 
@@ -42,6 +42,46 @@ class PageService {
     } catch (error) {
       console.error(`❌ Error in addLabels: ${error.message}`);
       return false;
+    }
+  }
+
+  /**
+   * Set a page property (metadata)
+   */
+  async setPageProperty(pageId, key, value) {
+    try {
+        const response = await api.asApp().requestConfluence(
+            route`/wiki/rest/api/content/${pageId}/property/${key}`,
+            {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    key,
+                    value,
+                    version: { number: 1, minorEdit: true }
+                })
+            }
+        );
+        return response.ok;
+    } catch (error) {
+        console.error(`❌ Error setting page property ${key}: ${error.message}`);
+        return false;
+    }
+  }
+
+  /**
+   * Get a page property
+   */
+  async getPageProperty(pageId, key) {
+    try {
+        const response = await api.asApp().requestConfluence(
+            route`/wiki/rest/api/content/${pageId}/property/${key}`
+        );
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data.value;
+    } catch (error) {
+        return null;
     }
   }
 

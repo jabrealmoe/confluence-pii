@@ -198,13 +198,13 @@ describe('PII Detection', () => {
       expect(result).toContain('"');
     });
 
-    it('should return null for invalid body', () => {
-      expect(extractContentPreview(null)).toBeNull();
-      expect(extractContentPreview({})).toBeNull();
-      expect(extractContentPreview({ storage: {} })).toBeNull();
+    it('should return empty string for invalid body', () => {
+      expect(extractContentPreview(null)).toBe("");
+      expect(extractContentPreview({})).toBe("");
+      expect(extractContentPreview({ storage: {} })).toBe("");
     });
 
-    it('should return null when no paragraph tags found', () => {
+    it('should return empty string when no paragraph tags found', () => {
       const body = {
         storage: {
           value: '<div>No paragraphs here</div>'
@@ -212,7 +212,7 @@ describe('PII Detection', () => {
       };
       const result = extractContentPreview(body);
       
-      expect(result).toBeNull();
+      expect(result).toBe("");
     });
   });
 

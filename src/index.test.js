@@ -21,11 +21,21 @@ jest.mock("@forge/api", () => ({
 describe('Main Trigger Entry Point', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    pageService.getPageProperty.mockResolvedValue(null);
   });
 
   it('should skip if no pageId in event', async () => {
     await run({});
     expect(configService.getSettings).not.toHaveBeenCalled();
+  });
+
+  it('should skip if version has already been scanned', async () => {
+    const event = { content: { id: 'page-123', version: { number: 2 } } };
+    pageService.getPageProperty.mockResolvedValue(2);
+    
+    await run(event);
+    
+    expect(piiDetectionService.scanPage).not.toHaveBeenCalled();
   });
 
   it('should scan page and take actions if PII detected', async () => {
