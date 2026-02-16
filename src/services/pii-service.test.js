@@ -2,20 +2,23 @@ import { piiDetectionService } from './pii-service';
 import { pageService } from './page-service';
 import { detectPii } from '../utils/pii-detector';
 
+import api, { route } from '@forge/api';
 
 jest.mock('../utils/pii-detector');
 jest.mock('./page-service');
 jest.mock('@forge/api', () => ({
   route: jest.fn(),
-  requestConfluence: jest.fn(),
-  asApp: () => ({
+  asApp: jest.fn(() => ({
     requestConfluence: jest.fn()
-  })
+  }))
 }));
+
+const mockRequestConfluence = jest.fn();
 
 describe('PiiDetectionService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    api.asApp.mockReturnValue({ requestConfluence: mockRequestConfluence });
   });
 
   describe('scanPage', () => {
@@ -50,6 +53,39 @@ describe('PiiDetectionService', () => {
       const body = { storage: { value: '<div>Hello <b>World</b></div>' } };
       const text = piiDetectionService.extractTextContent(body);
       expect(text).toBe('Hello World');
+    });
+
+    it('should return empty string if body is invalid', () => {
+        expect(piiDetectionService.extractTextContent(null)).toBe("");
+    });
+  });
+
+  describe('scanHistoricalVersions', () => {
+    it('should scan versions and returns findings', async () => {
+      mockRequestConfluence.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ results: [{ number: 1 }, { number: 2 }] })
+      });
+
+      pageService.getVersionData.mockImplementation((id, num) => ({
+        body: { storage: { value: num === 2 ? 'PII' : 'clean' } }
+      }));
+      detectPii.mockImplementation(content => {
+          if (content === 'PII') return [{ type: 'phone', count: 1 }];
+          return [];
+      });
+
+      const findings = await piiDetectionService.scanHistoricalVersions('123');
+
+      expect(findings).toHaveLength(1);
+      expect(findings[0].version).toBe(2);
+      expect(findings[0].piiTypes).toContain('phone');
+    });
+
+    it('should handle API failure gracefully', async () => {
+        mockRequestConfluence.mockResolvedValue({ ok: false });
+        const findings = await piiDetectionService.scanHistoricalVersions('123');
+        expect(findings).toHaveLength(0);
     });
   });
 });
