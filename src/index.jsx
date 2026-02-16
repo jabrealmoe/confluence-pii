@@ -3,6 +3,7 @@ import { piiDetectionService } from "./services/pii-service";
 import { pageService } from "./services/page-service";
 import { configService } from "./services/config-service";
 import { notificationService } from "./services/notification-service";
+import { classificationService } from "./services/classification-service";
 import { detectPii } from "./utils/pii-detector";
 
 
@@ -23,6 +24,23 @@ export async function run(event) {
   try {
     const settings = await configService.getSettings();
     const findings = await piiDetectionService.scanPage(pageId, settings);
+    
+    // 🔒 CLASSIFICATION DETECTION
+    const pageData = findings.pageData || await pageService.getPage(pageId);
+    const classification = await classificationService.detectClassification(
+      pageData.body.storage.value
+    );
+    
+    if (classification && classification.id !== 'unclassified') {
+      console.log(`🔒 Page classified as: ${classification.name}`);
+      
+      // Add classification label
+      const classLabel = classificationService.getClassificationLabel(classification);
+      await pageService.addLabels(pageId, [
+        classLabel,
+        classification.name.toLowerCase().replace(/\s+/g, '-')
+      ]);
+    }
 
     if (findings.detected) {
       console.log(`🚨 PII detected in ${pageId}`);

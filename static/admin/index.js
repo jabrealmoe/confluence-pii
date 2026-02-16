@@ -161,6 +161,132 @@ const App = () => {
                 boxShadow: 'var(--ds-shadow-raised, 0 1px 3px rgba(0,0,0,0.1))',
                 color: 'var(--ds-text, #172b4d)'
             }}>
+                <h3 style={{ marginTop: 0, color: 'var(--ds-text, #172b4d)' }}>Security Clearance Levels</h3>
+                <p style={{ fontSize: '14px', color: 'var(--ds-text-subtle, #6b778c)', marginBottom: '20px' }}>
+                    Manage security clearance levels and assign groups to each level. Pages with classification keywords will be automatically labeled.
+                </p>
+                
+                {(settings.clearanceLevels || []).map((level, levelIndex) => (
+                    <div key={level.id} style={{
+                        marginBottom: '20px',
+                        padding: '15px',
+                        border: '2px solid var(--ds-border, #dfe1e6)',
+                        borderRadius: '8px',
+                        backgroundColor: level.rank === 4 ? '#fff3cd' : level.rank === 3 ? '#f8d7da' : level.rank === 2 ? '#d1ecf1' : '#d4edda'
+                    }}>
+                        <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '12px'
+                        }}>
+                            <div style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--ds-text, #172b4d)' }}>
+                                {level.name}
+                            </div>
+                            <div style={{ 
+                                fontSize: '12px',
+                                padding: '4px 8px',
+                                borderRadius: '12px',
+                                backgroundColor: 'var(--ds-background-neutral, #f4f5f7)',
+                                color: 'var(--ds-text-subtle, #6b778c)'
+                            }}>
+                                Rank: {level.rank}
+                            </div>
+                        </div>
+                        
+                        <div style={{ marginBottom: '12px' }}>
+                            <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '8px', color: 'var(--ds-text, #172b4d)' }}>
+                                Authorized Groups:
+                            </label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                                {(level.groups || []).map((group, gIndex) => (
+                                    <div key={gIndex} style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        backgroundColor: '#0052cc',
+                                        color: 'white',
+                                        borderRadius: '16px',
+                                        padding: '4px 12px',
+                                        fontSize: '13px',
+                                        fontWeight: 500
+                                    }}>
+                                        {group}
+                                        <span 
+                                            onClick={() => {
+                                                const newLevels = [...settings.clearanceLevels];
+                                                newLevels[levelIndex].groups = newLevels[levelIndex].groups.filter((_, i) => i !== gIndex);
+                                                handleChange('clearanceLevels', newLevels);
+                                            }}
+                                            style={{
+                                                marginLeft: '8px',
+                                                cursor: 'pointer',
+                                                fontWeight: 'bold',
+                                                opacity: 0.8
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.opacity = 1}
+                                            onMouseLeave={(e) => e.target.style.opacity = 0.8}
+                                        >
+                                            ×
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Type group name and press Enter..."
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const val = e.target.value.trim();
+                                        if (val) {
+                                            const newLevels = [...settings.clearanceLevels];
+                                            if (!newLevels[levelIndex].groups.includes(val)) {
+                                                newLevels[levelIndex].groups = [...newLevels[levelIndex].groups, val];
+                                                handleChange('clearanceLevels', newLevels);
+                                            }
+                                            e.target.value = '';
+                                        }
+                                    }
+                                }}
+                                style={{
+                                    padding: '8px 12px',
+                                    width: '100%',
+                                    borderRadius: '4px',
+                                    border: '1px solid var(--ds-border, #dfe1e6)',
+                                    fontSize: '13px',
+                                    backgroundColor: 'var(--ds-background-input, white)',
+                                    color: 'var(--ds-text, #172b4d)'
+                                }}
+                            />
+                        </div>
+                        
+                        <div>
+                            <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: 'var(--ds-text, #172b4d)' }}>
+                                Detection Keywords:
+                            </label>
+                            <div style={{ 
+                                fontSize: '12px', 
+                                color: 'var(--ds-text-subtle, #6b778c)',
+                                fontFamily: 'monospace',
+                                backgroundColor: 'var(--ds-background-neutral, #f4f5f7)',
+                                padding: '8px',
+                                borderRadius: '4px'
+                            }}>
+                                {level.keywords.join(', ')}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div style={{
+                marginTop: '20px',
+                backgroundColor: 'var(--ds-surface-raised, white)',
+                padding: '20px',
+                borderRadius: '8px',
+                boxShadow: 'var(--ds-shadow-raised, 0 1px 3px rgba(0,0,0,0.1))',
+                color: 'var(--ds-text, #172b4d)'
+            }}>
                 <h3 style={{ marginTop: 0, color: 'var(--ds-text, #172b4d)' }}>Regulated User Controls</h3>
                 <p style={{ fontSize: '14px', color: 'var(--ds-text-subtle, #6b778c)' }}>
                     Users in these groups will be blocked from using @mentions and editing comments.

@@ -28,7 +28,37 @@ class ConfigService {
       passport: true,
       driversLicense: true,
       enableQuarantine: false,
-      enableHistoricalScan: false
+      enableHistoricalScan: false,
+      clearanceLevels: [
+        {
+          id: 'top-secret',
+          name: 'Top Secret',
+          rank: 4,
+          groups: [],
+          keywords: ['TOP SECRET', 'TS', 'TS//SCI', 'TS/SCI']
+        },
+        {
+          id: 'secret',
+          name: 'Secret',
+          rank: 3,
+          groups: [],
+          keywords: ['SECRET', 'S//']
+        },
+        {
+          id: 'confidential',
+          name: 'Confidential',
+          rank: 2,
+          groups: [],
+          keywords: ['CONFIDENTIAL', 'C//']
+        },
+        {
+          id: 'unclassified',
+          name: 'Unclassified',
+          rank: 1,
+          groups: [],
+          keywords: ['UNCLASSIFIED', 'U//']
+        }
+      ]
     };
     this.lastFetch = now;
     
