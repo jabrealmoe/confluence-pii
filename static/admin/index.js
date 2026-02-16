@@ -172,7 +172,7 @@ const App = () => {
                         padding: '15px',
                         border: '2px solid var(--ds-border, #dfe1e6)',
                         borderRadius: '8px',
-                        backgroundColor: level.rank === 4 ? '#fff3cd' : level.rank === 3 ? '#f8d7da' : level.rank === 2 ? '#d1ecf1' : '#d4edda'
+                        backgroundColor: level.rank === 5 ? '#fff3cd' : level.rank === 4 ? '#f8d7da' : level.rank === 3 ? '#d1ecf1' : level.rank === 2 ? '#e2e3e5' : '#d4edda'
                     }}>
                         <div style={{ 
                             display: 'flex', 

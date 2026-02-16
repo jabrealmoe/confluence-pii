@@ -33,30 +33,37 @@ class ConfigService {
         {
           id: 'top-secret',
           name: 'Top Secret',
-          rank: 4,
+          rank: 5,
           groups: [],
           keywords: ['TOP SECRET', 'TS', 'TS//SCI', 'TS/SCI']
         },
         {
           id: 'secret',
           name: 'Secret',
-          rank: 3,
+          rank: 4,
           groups: [],
           keywords: ['SECRET', 'S//']
         },
         {
           id: 'confidential',
           name: 'Confidential',
-          rank: 2,
+          rank: 3,
           groups: [],
           keywords: ['CONFIDENTIAL', 'C//']
+        },
+        {
+          id: 'internal',
+          name: 'Internal',
+          rank: 2,
+          groups: [],
+          keywords: ['INTERNAL', 'INTERNAL USE ONLY', 'EMPLOYEES ONLY']
         },
         {
           id: 'unclassified',
           name: 'Unclassified',
           rank: 1,
           groups: [],
-          keywords: ['UNCLASSIFIED', 'U//']
+          keywords: ['UNCLASSIFIED', 'U//', 'PUBLIC']
         }
       ]
     };
