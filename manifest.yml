@@ -27,13 +27,9 @@ app:
   id: ari:cloud:ecosystem::app/d4615e62-0837-4e1f-9fd8-02e2dea232ab
 permissions:
   scopes:
-    - write:page:confluence
     - read:page:confluence
-    - read:confluence-content.all
-    - read:confluence-content.summary
-    - read:jira-work
-    - search:confluence
-    - write:confluence-content
-    - read:confluence-user
     - write:page:confluence
+    - read:confluence-content.all
+    - search:confluence
+    - read:confluence-user
     - storage:app
