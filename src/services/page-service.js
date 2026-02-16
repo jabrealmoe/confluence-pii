@@ -204,6 +204,22 @@ class PageService {
 
     return mergedRestrictions;
   }
+
+  /**
+   * Fetches space data (API V2)
+   */
+  async getSpaceData(spaceId) {
+    try {
+      const response = await api.asApp().requestConfluence(
+        route`/wiki/api/v2/spaces/${spaceId}`
+      );
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (error) {
+      console.error(`❌ Error in getSpaceData: ${error.message}`);
+      return null;
+    }
+  }
 }
 
 export const pageService = new PageService();

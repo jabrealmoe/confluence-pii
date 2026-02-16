@@ -5,6 +5,7 @@ import { configService } from "./services/config-service";
 import { notificationService } from "./services/notification-service";
 import { classificationService } from "./services/classification-service";
 import { detectPii } from "./utils/pii-detector";
+import { incidentService } from "./services/incident-service";
 
 
 
@@ -58,6 +59,18 @@ export async function run(event) {
       // 1. Tag page
       await pageService.addLabels(pageId, ["confidential", "pii-detected"]);
       
+      // 1.5 Record Incident
+      const spaceData = await pageService.getSpaceData(findings.pageData.spaceId);
+      await incidentService.recordIncident({
+          pageId,
+          title: findings.pageData.title,
+          spaceKey: spaceData?.key || findings.pageData.spaceId,
+          spaceName: spaceData?.name || "Unknown Space",
+          type: 'Page',
+          piiTypes: findings.hits.map(h => h.type),
+          status: settings.enableQuarantine ? 'Quarantined' : 'Detected'
+      });
+
       // 2. Add visual banner & highlight
       const highlightedBody = notificationService.highlightPiiInContent(findings.pageData.body.storage.value, findings.hits);
       await notificationService.addColoredBanner(pageId, findings.pageData, findings.hits, highlightedBody);

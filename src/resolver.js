@@ -1,5 +1,6 @@
 import Resolver from '@forge/resolver';
 import { configService } from './services/config-service';
+import { incidentService } from './services/incident-service';
 
 const resolver = new Resolver();
 
@@ -27,6 +28,20 @@ resolver.define('getSiteStats', async () => {
 resolver.define('scanSiteBatch', async (req) => {
     const { start, limit } = req.payload;
     return await siteScanService.scanBatch(start, limit);
+});
+
+resolver.define('getIncidents', async () => {
+    return await incidentService.getIncidents();
+});
+
+resolver.define('updateIncidentStatus', async (req) => {
+    const { id, status } = req.payload;
+    return await incidentService.updateIncidentStatus(id, status);
+});
+
+resolver.define('deleteIncident', async (req) => {
+    const { id } = req.payload;
+    return await incidentService.deleteIncident(id);
 });
 
 resolver.define('getVersion', async () => {
