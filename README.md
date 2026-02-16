@@ -278,6 +278,18 @@ This project includes a comprehensive CI/CD pipeline that automatically:
 
 Push to `development` to trigger the full CI/CD cascade.
 
+### Development Guardrails
+
+To prevent CI/CD failures and maintain high code quality, we use an AI-assisted **Lint Guardrail Skill**.
+
+**Requirement:** Every time you commit or deploy, ensure you run:
+
+```bash
+npm run lint
+```
+
+Internal developers using AI agents should ensure the `lint_guardrails` skill is active to automatically enforce these checks during the development lifecycle.
+
 ## Security & Privacy
 
 - **No External Calls**: All processing happens within Atlassian's infrastructure
