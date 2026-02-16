@@ -30,6 +30,8 @@ permissions:
     - read:page:confluence
     - write:page:confluence
     - read:confluence-content.all
+    - read:confluence-content.summary
+    - write:confluence-content
     - search:confluence
     - read:confluence-user
     - storage:app
