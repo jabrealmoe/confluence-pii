@@ -63,7 +63,7 @@ describe('SiteScanService', () => {
 
       const mockResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ results: mockPages })
+        json: jest.fn().mockResolvedValue({ results: mockPages, _links: {} })
       };
       mockRequestConfluence.mockResolvedValue(mockResponse);
 
@@ -73,7 +73,7 @@ describe('SiteScanService', () => {
           return [];
       });
 
-      const results = await siteScanService.scanBatch(0, 10);
+      const results = await siteScanService.scanBatch(null, 10);
 
       expect(results.pagesScanned).toBe(2);
       expect(results.stats.active).toBe(2); // Since we skip restriction check in batch for performance
@@ -84,9 +84,10 @@ describe('SiteScanService', () => {
     });
 
     it('should return empty results on API failure', async () => {
-        mockRequestConfluence.mockResolvedValue({ ok: false });
-        const results = await siteScanService.scanBatch(0, 10);
-        expect(results.results).toHaveLength(0);
+        mockRequestConfluence.mockResolvedValue({ ok: false, status: 500 });
+        const results = await siteScanService.scanBatch(null, 10);
+        expect(results.findings).toHaveLength(0);
+        expect(results.pagesScanned).toBe(0);
     });
   });
 });
