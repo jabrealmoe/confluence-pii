@@ -33,6 +33,7 @@ class IncidentService {
      * Fetches all recorded incidents
      */
     async getIncidents() {
+        console.log("🛠️ Incident Service V3 Initialized - JS Filtering Active");
         try {
             // Recommendation: Filter in JS to avoid unstable GraphQL 'where' condition errors across environments
             const results = await storage.query()
