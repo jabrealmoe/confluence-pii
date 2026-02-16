@@ -34,12 +34,17 @@ class IncidentService {
      */
     async getIncidents() {
         try {
+            // Recommendation: Filter in JS to avoid unstable GraphQL 'where' condition errors across environments
             const results = await storage.query()
-                .where('key', startsWith('pii-incident-'))
                 .limit(50)
                 .getMany();
             
-            return results.map(r => r.value).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            const incidentRecords = results.results || [];
+            
+            return incidentRecords
+                .filter(item => item.key.startsWith('pii-incident-'))
+                .map(r => r.value)
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         } catch (error) {
             console.error(`❌ Failed to fetch incidents: ${error.message}`);
             return [];
