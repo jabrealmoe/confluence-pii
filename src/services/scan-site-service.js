@@ -37,10 +37,18 @@ class SiteScanService {
             route`/wiki/rest/api/content?type=page&limit=${limit}&start=${start}&expand=body.storage`
         );
         
-        if (!response.ok) return { results: [], stats: { active: 0, quarantined: 0, hitsByType: {} } };
+        if (!response.ok) {
+            console.error(`❌ Batch fetch failed: ${response.status}`);
+            return { results: [], stats: { active: 0, quarantined: 0, hitsByType: {} } };
+        }
         const data = await response.json();
         const pages = data.results || [];
         const settings = await configService.getSettings();
+
+        // Diagnostic: Log active detection rules for this batch
+        const activeRules = ['email', 'phone', 'creditCard', 'ssn', 'passport', 'driversLicense']
+            .filter(r => settings[r]);
+        console.log(`🔎 Batch [${start}-${start + limit}]: ${pages.length} pages, active rules: [${activeRules.join(', ')}]`);
 
         const batchResults = {
             pagesScanned: pages.length,
@@ -48,15 +56,18 @@ class SiteScanService {
             stats: { active: 0, quarantined: 0, hitsByType: {} }
         };
 
-        // Recommendation 1: Parallel Batch Processing
+        // Parallel Batch Processing
         await Promise.all(pages.map(async (page) => {
             const content = piiDetectionService.extractTextContent(page.body);
-            // Recommendation 5: Uses optimized regex
             const hits = detectPii(content, settings);
             
-            // Check for quarantine (using V2 labels as a proxy for speed, or just results)
-            // Note: restrictions are still best checked via V1 or checking restrictions object if present
-            const isQuarantined = false; // Placeholder for V2 restriction check if available
+            // Diagnostic: Log first batch with content details
+            if (start === 0) {
+                const contentPreview = content ? content.substring(0, 80) : '(empty)';
+                console.log(`  📄 Page "${page.title}" [${page.id}]: content=${content.length} chars, hits=${hits.length}, preview="${contentPreview}"`);
+            }
+
+            const isQuarantined = false;
 
             if (isQuarantined) batchResults.stats.quarantined++;
             else batchResults.stats.active++;
@@ -74,6 +85,7 @@ class SiteScanService {
             }
         }));
 
+        console.log(`✅ Batch [${start}-${start + limit}] complete: ${batchResults.findings.length} pages with PII, hitsByType=${JSON.stringify(batchResults.stats.hitsByType)}`);
         return batchResults;
     }
 }
