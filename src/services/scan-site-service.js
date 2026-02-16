@@ -8,12 +8,24 @@ class SiteScanService {
      * Get total page count using search
      */
     async getPageCount() {
-        const response = await api.asApp().requestConfluence(
-            route`/wiki/rest/api/content?type=page&limit=0`
-        );
-        if (!response.ok) throw new Error("Failed to fetch page count");
-        const data = await response.json();
-        return data.size || 0;
+        try {
+            const response = await api.asApp().requestConfluence(
+                route`/wiki/rest/api/search?cql=type=page&limit=0`
+            );
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`❌ Page count fetch failed: ${response.status} ${response.statusText}`, errorText);
+                throw new Error(`Failed to fetch page count: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log(`📊 Found total pages: ${data.totalSize}`);
+            return data.totalSize || 0;
+        } catch (error) {
+            console.error(`❌ Site analysis initialization error: ${error.message}`);
+            throw error;
+        }
     }
 
     /**
