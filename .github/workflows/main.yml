@@ -298,15 +298,16 @@ jobs:
           FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}
           FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
       - name: Notify Rollback
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🚨 Deployment failed. System initiated automatic rollback to ${{ steps.prev_tag.outputs.previous_tag }}.'
-            })
+        if: always()
+        run: |
+          echo "## 🚨 Automatic Rollback Executed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Reason:** Production deployment failed" >> $GITHUB_STEP_SUMMARY
+          echo "**Rolled back to:** \`${{ steps.prev_tag.outputs.previous_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please investigate the deployment failure and address issues before redeploying." >> $GITHUB_STEP_SUMMARY
+          echo "::error title=Rollback Executed::Deployment failed. Rolled back to ${{ steps.prev_tag.outputs.previous_tag }}"
 
   # ------------------------------------------------------------------
   # Release Creation & Notifications
