@@ -75,7 +75,7 @@ class ConfigService {
     return this.cache;
   }
 
-  async saveSettings(settings) {
+  async saveSettings(settings, accountId = 'Unknown User') {
     // 🔍 AUDIT LOG: Check for changes in detection rules
     try {
       const oldSettings = await storage.get(SETTINGS_KEY) || {};
@@ -84,7 +84,7 @@ class ConfigService {
       detectionRules.forEach(rule => {
         if (oldSettings[rule] !== settings[rule]) {
           const status = settings[rule] ? 'ENABLED' : 'DISABLED';
-          console.log(`📡 [CONFIG UPDATE] Detection rule '${rule}' was ${status}`);
+          console.log(`📡 [CONFIG UPDATE] User ${accountId} ${status} detection rule: '${rule}'`);
         }
       });
     } catch (error) {

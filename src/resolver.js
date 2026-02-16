@@ -12,7 +12,8 @@ resolver.define('getSettings', async () => {
 
 resolver.define('saveSettings', async (req) => {
     const settings = req.payload;
-    return await configService.saveSettings(settings);
+    const accountId = req.context?.accountId;
+    return await configService.saveSettings(settings, accountId);
 });
 
 resolver.define('getVersion', async () => {
