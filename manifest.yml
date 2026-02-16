@@ -39,6 +39,7 @@ permissions:
     # Search and user operations
     - search:confluence
     - read:confluence-user
+    - read:space:confluence
 
     # App storage
     - storage:app
