@@ -1,0 +1,15 @@
+{
+  "name": "pii-byline",
+  "version": "1.0.0",
+  "description": "PII status indicator for Confluence page byline",
+  "scripts": {
+    "build": "rm -rf .parcel-cache && parcel build index.html --dist-dir ../byline-build --public-url ./"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "@forge/bridge": "5.10.2",
+    "parcel": "^2.16.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  }
+}

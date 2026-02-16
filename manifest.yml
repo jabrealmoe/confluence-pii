@@ -10,15 +10,25 @@ modules:
       handler: index.run
     - key: pii-admin-resolver
       handler: resolver.handler
+    - key: pii-byline-resolver
+      handler: byline-resolver.handler
   confluence:globalSettings:
     - key: pii-admin-settings-v3
       resource: admin-resource
       resolver:
         function: pii-admin-resolver
       title: PII Configuration
+  confluence:contentBylineItem:
+    - key: pii-status-indicator
+      resource: byline-resource
+      resolver:
+        function: pii-byline-resolver
+      title: PII Shield
 resources:
   - key: admin-resource
     path: static/admin-build
+  - key: byline-resource
+    path: static/byline-build
 app:
   runtime:
     name: nodejs22.x
