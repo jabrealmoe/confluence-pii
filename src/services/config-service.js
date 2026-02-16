@@ -18,9 +18,7 @@ class ConfigService {
       return this.cache;
     }
 
-    console.log("📥 Fetching settings from storage");
-    const stored = await storage.get(SETTINGS_KEY);
-    this.cache = stored || {
+    const defaults = {
       email: true,
       phone: true,
       creditCard: true,
@@ -67,6 +65,11 @@ class ConfigService {
         }
       ]
     };
+
+    console.log("📥 Fetching settings from storage");
+    const stored = await storage.get(SETTINGS_KEY);
+    this.cache = stored ? { ...defaults, ...stored } : defaults;
+
     this.lastFetch = now;
     
     return this.cache;
