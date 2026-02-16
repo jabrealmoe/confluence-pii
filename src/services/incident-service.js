@@ -1,4 +1,4 @@
-import { storage } from '@forge/api';
+import { storage, startsWith } from '@forge/api';
 
 class IncidentService {
     /**
@@ -35,7 +35,7 @@ class IncidentService {
     async getIncidents() {
         try {
             const results = await storage.query()
-                .where('key', 'starts_with', 'pii-incident-')
+                .where('key', startsWith('pii-incident-'))
                 .limit(50)
                 .getMany();
             

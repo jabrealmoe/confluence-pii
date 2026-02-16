@@ -32,12 +32,12 @@ class SiteScanService {
      * Scan a batch of pages (Parallelized + API V2)
      */
     async scanBatch(start, limit = 10) {
-        // Recommendation 2: Use API V2 for leaner payloads and speed
+        // Switching back to V1 for reliable offset-based batching (V2 doesn't support 'start')
         const response = await api.asApp().requestConfluence(
-            route`/wiki/api/v2/pages?limit=${limit}&offset=${start}&body-format=storage`
+            route`/wiki/rest/api/content?type=page&limit=${limit}&start=${start}&expand=body.storage`
         );
         
-        if (!response.ok) return { results: [], next: null };
+        if (!response.ok) return { results: [], stats: { active: 0, quarantined: 0, hitsByType: {} } };
         const data = await response.json();
         const pages = data.results || [];
         const settings = await configService.getSettings();
