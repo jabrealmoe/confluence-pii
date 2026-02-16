@@ -7,6 +7,35 @@ import DnaAnimation from './DnaAnimation';
 // Enable Confluence Theme Sync
 view.theme.enable();
 
+const Toggle = ({ checked, onChange }) => (
+    <div 
+        onClick={() => onChange({ target: { checked: !checked } })}
+        style={{
+            width: '44px',
+            height: '24px',
+            backgroundColor: checked ? '#2563eb' : '#d1d5db',
+            borderRadius: '12px',
+            position: 'relative',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+            flexShrink: 0,
+            userSelect: 'none'
+        }}
+    >
+        <div style={{
+            width: '18px',
+            height: '18px',
+            backgroundColor: 'white',
+            borderRadius: '50%',
+            position: 'absolute',
+            top: '3px',
+            left: checked ? '23px' : '3px',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+        }} />
+    </div>
+);
+
 const App = () => {
     const [settings, setSettings] = useState(null);
     const [version, setVersion] = useState(null);
@@ -70,16 +99,14 @@ const App = () => {
                 color: 'var(--ds-text, #172b4d)'
             }}>
                 <h4 style={{ marginTop: 0, marginBottom: '15px', color: 'var(--ds-text, #172b4d)' }}>Detection Rules</h4>
-                {Object.keys(settings).filter(k => k !== 'regulatedGroupName').map((key) => (
+                {Object.keys(settings).filter(k => !['regulatedGroupName', 'enableQuarantine', 'enableHistoricalScan', 'clearanceLevels', 'regulatedGroups'].includes(k)).map((key) => (
                     <div key={key} style={{ marginBottom: '12px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'var(--ds-text, #172b4d)' }}>
-                            <input
-                                type="checkbox"
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'var(--ds-text, #172b4d)', gap: '12px' }}>
+                            <Toggle
                                 checked={settings[key]}
                                 onChange={(e) => handleChange(key, e.target.checked)}
-                                style={{ marginRight: '10px', width: '16px', height: '16px', accentColor: 'var(--ds-background-selected, #0052cc)' }}
                             />
-                            <span style={{ fontSize: '14px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: 500 }}>
                                 {key === 'driversLicense' ? "Driver's License" : key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim()}
                             </span>
                         </label>
@@ -101,19 +128,10 @@ const App = () => {
                 </p>
 
                 <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
-                        <input
-                            type="checkbox"
+                    <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer', gap: '16px' }}>
+                        <Toggle
                             checked={settings.enableQuarantine || false}
                             onChange={(e) => handleChange('enableQuarantine', e.target.checked)}
-                            style={{ 
-                                marginRight: '12px', 
-                                marginTop: '2px',
-                                width: '18px', 
-                                height: '18px', 
-                                accentColor: 'var(--ds-background-selected, #0052cc)',
-                                cursor: 'pointer'
-                            }}
                         />
                         <div>
                             <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '4px' }}>
@@ -127,19 +145,10 @@ const App = () => {
                 </div>
 
                 <div style={{ marginBottom: '0' }}>
-                    <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
-                        <input
-                            type="checkbox"
+                    <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer', gap: '16px' }}>
+                        <Toggle
                             checked={settings.enableHistoricalScan || false}
                             onChange={(e) => handleChange('enableHistoricalScan', e.target.checked)}
-                            style={{ 
-                                marginRight: '12px', 
-                                marginTop: '2px',
-                                width: '18px', 
-                                height: '18px', 
-                                accentColor: 'var(--ds-background-selected, #0052cc)',
-                                cursor: 'pointer'
-                            }}
                         />
                         <div>
                             <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '4px' }}>
