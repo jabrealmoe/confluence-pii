@@ -27,11 +27,18 @@ app:
   id: ari:cloud:ecosystem::app/d4615e62-0837-4e1f-9fd8-02e2dea232ab
 permissions:
   scopes:
+    # Page operations - read and modify pages
     - read:page:confluence
     - write:page:confluence
+
+    # Content operations - required for triggers and labeling
     - read:confluence-content.all
-    - read:confluence-content.summary
-    - write:confluence-content
+    - read:confluence-content.summary # Required for page created/updated triggers
+    - write:confluence-content # Required for adding labels to pages
+
+    # Search and user operations
     - search:confluence
     - read:confluence-user
+
+    # App storage
     - storage:app
