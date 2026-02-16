@@ -27,7 +27,8 @@ class ConfigService {
       ssn: true,
       passport: true,
       driversLicense: true,
-      enableQuarantine: false
+      enableQuarantine: false,
+      enableHistoricalScan: false
     };
     this.lastFetch = now;
     

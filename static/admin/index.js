@@ -95,6 +95,72 @@ const App = () => {
                 boxShadow: 'var(--ds-shadow-raised, 0 1px 3px rgba(0,0,0,0.1))',
                 color: 'var(--ds-text, #172b4d)'
             }}>
+                <h3 style={{ marginTop: 0, color: 'var(--ds-text, #172b4d)' }}>Protection Actions</h3>
+                <p style={{ fontSize: '14px', color: 'var(--ds-text-subtle, #6b778c)', marginBottom: '20px' }}>
+                    Configure automated actions when PII is detected.
+                </p>
+
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            checked={settings.enableQuarantine || false}
+                            onChange={(e) => handleChange('enableQuarantine', e.target.checked)}
+                            style={{ 
+                                marginRight: '12px', 
+                                marginTop: '2px',
+                                width: '18px', 
+                                height: '18px', 
+                                accentColor: 'var(--ds-background-selected, #0052cc)',
+                                cursor: 'pointer'
+                            }}
+                        />
+                        <div>
+                            <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '4px' }}>
+                                Auto-Quarantine Pages
+                            </div>
+                            <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle, #6b778c)' }}>
+                                Automatically restrict page access when PII is detected. Only the author will be able to view and edit.
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <div style={{ marginBottom: '0' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            checked={settings.enableHistoricalScan || false}
+                            onChange={(e) => handleChange('enableHistoricalScan', e.target.checked)}
+                            style={{ 
+                                marginRight: '12px', 
+                                marginTop: '2px',
+                                width: '18px', 
+                                height: '18px', 
+                                accentColor: 'var(--ds-background-selected, #0052cc)',
+                                cursor: 'pointer'
+                            }}
+                        />
+                        <div>
+                            <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '4px' }}>
+                                Scan Historical Versions
+                            </div>
+                            <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle, #6b778c)' }}>
+                                Scan the last 10 versions of each page for PII. May impact performance for pages with many revisions.
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div style={{
+                marginTop: '20px',
+                backgroundColor: 'var(--ds-surface-raised, white)',
+                padding: '20px',
+                borderRadius: '8px',
+                boxShadow: 'var(--ds-shadow-raised, 0 1px 3px rgba(0,0,0,0.1))',
+                color: 'var(--ds-text, #172b4d)'
+            }}>
                 <h3 style={{ marginTop: 0, color: 'var(--ds-text, #172b4d)' }}>Regulated User Controls</h3>
                 <p style={{ fontSize: '14px', color: 'var(--ds-text-subtle, #6b778c)' }}>
                     Users in these groups will be blocked from using @mentions and editing comments.

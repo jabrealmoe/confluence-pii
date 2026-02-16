@@ -40,8 +40,12 @@ export async function run(event) {
         await pageService.setRestrictions(pageId, authorId);
       }
 
-      // 4. Scan historical versions (limited)
-      const versionFindings = await piiDetectionService.scanHistoricalVersions(pageId, 10);
+      // 4. Scan historical versions (if enabled)
+      let versionFindings = [];
+      if (settings.enableHistoricalScan) {
+        console.log(`🔍 Scanning historical versions for page ${pageId}...`);
+        versionFindings = await piiDetectionService.scanHistoricalVersions(pageId, 10);
+      }
       
       // 5. Final Report
       await notificationService.reportFindings({
