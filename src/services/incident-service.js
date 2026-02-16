@@ -1,4 +1,4 @@
-import { storage, startsWith } from '@forge/api';
+import { storage } from '@forge/api';
 
 class IncidentService {
     /**
