@@ -280,15 +280,14 @@ Push to `development` to trigger the full CI/CD cascade.
 
 ### Development Guardrails
 
-To prevent CI/CD failures and maintain high code quality, we use an AI-assisted **Lint Guardrail Skill**.
+To prevent CI/CD failures and maintain high code quality, we use an AI-assisted **Quality Guardrail Skill**.
 
-**Requirement:** Every time you commit or deploy, ensure you run:
+**Requirements:**
 
-```bash
-npm run lint
-```
+1. **Linting**: Every time you commit or deploy, ensure you run `npm run lint`.
+2. **Standardized Commits**: All commit messages must follow the **Conventional Commits** specification (e.g., `feat:`, `fix:`, `chore:`).
 
-Internal developers using AI agents should ensure the `lint_guardrails` skill is active to automatically enforce these checks during the development lifecycle.
+Internal developers using AI agents should ensure the `quality_guardrails` skill is active to automatically enforce these checks during the development lifecycle.
 
 ## Security & Privacy
 
