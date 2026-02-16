@@ -16,6 +16,19 @@ resolver.define('saveSettings', async (req) => {
     return await configService.saveSettings(settings, accountId);
 });
 
+import { siteScanService } from './services/scan-site-service';
+
+resolver.define('getSiteStats', async () => {
+    return {
+        totalPages: await siteScanService.getPageCount()
+    };
+});
+
+resolver.define('scanSiteBatch', async (req) => {
+    const { start, limit } = req.payload;
+    return await siteScanService.scanBatch(start, limit);
+});
+
 resolver.define('getVersion', async () => {
     return {
         version: packageJson.version,

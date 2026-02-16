@@ -36,12 +36,66 @@ const Toggle = ({ checked, onChange }) => (
     </div>
 );
 
+const Chart = ({ data, selectedType, onSelect }) => {
+    const entries = Object.entries(data).filter(([_, val]) => val > 0);
+    if (entries.length === 0) return (
+        <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b778c', border: '1px dashed #dfe1e6', borderRadius: '8px' }}>
+            No sensitive data patterns found yet.
+        </div>
+    );
+
+    const maxVal = Math.max(...entries.map(e => e[1]), 1);
+    const chartWidth = 600;
+    const barHeight = 35;
+    const gap = 12;
+
+    return (
+        <div style={{ marginTop: '15px' }}>
+            <svg width="100%" viewBox={`0 0 ${chartWidth} ${entries.length * (barHeight + gap)}`} style={{ overflow: 'visible' }}>
+                {entries.map(([key, val], i) => {
+                    const isSelected = selectedType === key;
+                    const width = (val / maxVal) * (chartWidth - 150);
+                    return (
+                        <g key={key} transform={`translate(0, ${i * (barHeight + gap)})`} 
+                           style={{ cursor: 'pointer' }} onClick={() => onSelect(isSelected ? null : key)}>
+                            <text x="0" y={barHeight / 1.5} fontSize="13" fontWeight="600" fill={isSelected ? '#0052cc' : '#172b4d'}>
+                                {key.charAt(0).toUpperCase() + key.slice(1)}
+                            </text>
+                            <rect 
+                                x="120" 
+                                y="0" 
+                                width={width} 
+                                height={barHeight} 
+                                fill={isSelected ? '#36b37e' : '#ebecf0'} 
+                                rx="4"
+                                style={{ transition: 'all 0.3s ease' }}
+                            />
+                            <text x={130 + width} y={barHeight / 1.5} fontSize="14" fontWeight="bold" fill="#172b4d">
+                                {val}
+                            </text>
+                        </g>
+                    );
+                })}
+            </svg>
+            {selectedType && (
+                <div style={{ marginTop: '10px', fontSize: '12px', color: '#0052cc', fontWeight: '500' }}>
+                    💡 Showing breakdown for {selectedType.toUpperCase()}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const App = () => {
     const [settings, setSettings] = useState(null);
     const [version, setVersion] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [scanning, setScanning] = useState(false);
+    const [scanProgress, setScanProgress] = useState(0);
+    const [scanResults, setScanResults] = useState(null);
+    const [selectedMetric, setSelectedMetric] = useState(null);
 
     useEffect(() => {
         Promise.all([
@@ -73,6 +127,48 @@ const App = () => {
         }
     };
 
+    const runFullScan = async () => {
+        setScanning(true);
+        setScanProgress(0);
+        try {
+            const { totalPages } = await invoke('getSiteStats');
+            if (totalPages === 0) {
+                setScanResults({ active: 0, quarantined: 0, hitsByType: {} });
+                return;
+            }
+
+            let aggregatedHits = {};
+            let activeCount = 0;
+            let quarantinedCount = 0;
+            const batchSize = 10;
+
+            for (let i = 0; i < totalPages; i += batchSize) {
+                const results = await invoke('scanSiteBatch', { start: i, limit: batchSize });
+                
+                activeCount += results.stats.active;
+                quarantinedCount += results.stats.quarantined;
+                
+                Object.entries(results.stats.hitsByType).forEach(([type, count]) => {
+                    aggregatedHits[type] = (aggregatedHits[type] || 0) + count;
+                });
+
+                setScanProgress(Math.min(100, Math.round(((i + batchSize) / totalPages) * 100)));
+            }
+
+            setScanResults({
+                active: activeCount,
+                quarantined: quarantinedCount,
+                hitsByType: aggregatedHits,
+                total: totalPages
+            });
+        } catch (e) {
+            console.error("Scan failed", e);
+            alert("Analysis failed to complete.");
+        } finally {
+            setScanning(false);
+        }
+    };
+
     if (loading) return <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>Loading settings...</div>;
 
     return (
@@ -83,6 +179,85 @@ const App = () => {
             </div>
 
             <DnaAnimation />
+
+            {/* Analysis Dashboard */}
+            <div style={{
+                backgroundColor: 'var(--ds-surface-raised, white)',
+                padding: '24px',
+                borderRadius: '12px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                marginBottom: '30px',
+                border: '1px solid var(--ds-border, #dfe1e6)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                    <div>
+                        <h3 style={{ margin: 0, fontSize: '20px' }}>Data Privacy Dashboard</h3>
+                        <p style={{ margin: '4px 0 0 0', color: '#6b778c', fontSize: '13px' }}>Institutional analysis of sensitive data distribution</p>
+                    </div>
+                    <button 
+                        onClick={runFullScan}
+                        disabled={scanning}
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: scanning ? '#f4f5f7' : '#0052cc',
+                            color: scanning ? '#a5adba' : 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontWeight: '600',
+                            cursor: scanning ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}
+                    >
+                        {scanning ? `Analyzing (${scanProgress}%)...` : '🔍 Run Site Analysis'}
+                    </button>
+                </div>
+
+                {scanning && (
+                    <div style={{ height: '6px', width: '100%', backgroundColor: '#ebecf0', borderRadius: '3px', marginBottom: '20px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${scanProgress}%`, backgroundColor: '#4c9aff', transition: 'width 0.3s ease' }} />
+                    </div>
+                )}
+
+                {scanResults ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '30px' }}>
+                        <div>
+                            <div style={{ marginBottom: '20px' }}>
+                                <div style={{ fontSize: '12px', color: '#6b778c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Content Status</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', backgroundColor: '#e3fcef', borderRadius: '6px' }}>
+                                        <span style={{ fontWeight: '600', color: '#006644' }}>Active Pages</span>
+                                        <span style={{ fontWeight: 'bold' }}>{scanResults.active}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', backgroundColor: '#fffae6', borderRadius: '6px' }}>
+                                        <span style={{ fontWeight: '600', color: '#825c00' }}>In Quarantine</span>
+                                        <span style={{ fontWeight: 'bold' }}>{scanResults.quarantined}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ padding: '15px', backgroundColor: '#f4f5f7', borderRadius: '8px', fontSize: '13px' }}>
+                                <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Summary</div>
+                                Identified {Object.values(scanResults.hitsByType).reduce((a, b) => a + b, 0)} potential risk points across {scanResults.total} pages.
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '12px', color: '#6b778c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Incident Distribution</div>
+                            <Chart 
+                                data={scanResults.hitsByType} 
+                                selectedType={selectedMetric} 
+                                onSelect={setSelectedMetric} 
+                            />
+                        </div>
+                    </div>
+                ) : !scanning && (
+                    <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#fafbfc', borderRadius: '8px', border: '2px dashed #dfe1e6' }}>
+                        <div style={{ fontSize: '30px', marginBottom: '10px' }}>📊</div>
+                        <div style={{ fontWeight: '600', color: '#172b4d' }}>No scan data available</div>
+                        <div style={{ fontSize: '13px', color: '#6b778c', marginTop: '4px' }}>Launch a full-site analysis to visualize your data exposure.</div>
+                    </div>
+                )}
+            </div>
 
             <div style={{ marginBottom: '20px' }}>
                 <h2 style={{ margin: 0 }}>Data Detection Profiles</h2>
