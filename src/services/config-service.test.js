@@ -52,9 +52,12 @@ describe('ConfigService', () => {
     storage.get.mockResolvedValueOnce({ email: true });
 
     const newSettings = { email: false };
-    await configService.saveSettings(newSettings);
+    const result = await configService.saveSettings(newSettings);
     
-    expect(storage.set).toHaveBeenCalledWith('pii-settings-v1', newSettings);
+    // saveSettings merges with defaults before storing, so the stored object includes all default keys
+    expect(storage.set).toHaveBeenCalledWith('pii-settings-v1', expect.objectContaining({ email: false, phone: true }));
+    expect(result.email).toBe(false);
+    expect(result.clearanceLevels).toHaveLength(5); // defaults preserved
     
     const settings = await configService.getSettings();
     expect(settings.email).toBe(false);
