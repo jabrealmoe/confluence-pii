@@ -45,6 +45,7 @@ permissions:
     - read:confluence-content.all
     - read:confluence-content.summary # Required for page created/updated triggers
     - write:confluence-content # Required for adding labels to pages
+    - read:label:confluence # Required for byline PII label check
 
     # Search and user operations
     - search:confluence
