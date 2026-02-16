@@ -184,11 +184,17 @@ const App = () => {
                                 {level.name}
                             </div>
                             <div style={{ 
-                                fontSize: '12px',
-                                padding: '4px 8px',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                padding: '4px 10px',
                                 borderRadius: '12px',
-                                backgroundColor: 'var(--ds-background-neutral, #f4f5f7)',
-                                color: 'var(--ds-text-subtle, #6b778c)'
+                                backgroundColor: 'var(--ds-background-accent-gray-subtle, #42526e)',
+                                color: 'white',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                                display: 'inline-flex',
+                                alignItems: 'center'
                             }}>
                                 Rank: {level.rank}
                             </div>
