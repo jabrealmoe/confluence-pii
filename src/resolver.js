@@ -30,8 +30,29 @@ resolver.define('scanSiteBatch', async (req) => {
     return await siteScanService.scanBatch(start, limit);
 });
 
+import { storage } from '@forge/api';
+
 resolver.define('getIncidents', async () => {
-    return await incidentService.getIncidents();
+    console.log("🛠️ getIncidents V4 - Inlined in resolver");
+    try {
+        const queryResult = await storage.query()
+            .limit(50)
+            .getMany();
+
+        const allRecords = queryResult.results || [];
+        console.log(`📋 Storage returned ${allRecords.length} total records`);
+
+        const incidents = allRecords
+            .filter(item => item.key.startsWith('pii-incident-'))
+            .map(r => r.value)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        console.log(`✅ Returning ${incidents.length} incident(s)`);
+        return incidents;
+    } catch (error) {
+        console.error(`❌ getIncidents V4 error: ${error.message}`);
+        return [];
+    }
 });
 
 resolver.define('updateIncidentStatus', async (req) => {
