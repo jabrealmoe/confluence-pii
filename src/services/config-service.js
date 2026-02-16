@@ -18,7 +18,22 @@ class ConfigService {
       return this.cache;
     }
 
-    const defaults = {
+    const defaults = this.getDefaults();
+
+    console.log("📥 Fetching settings from storage");
+    const stored = await storage.get(SETTINGS_KEY);
+    this.cache = stored ? { ...defaults, ...stored } : defaults;
+
+    this.lastFetch = now;
+    
+    return this.cache;
+  }
+
+  /**
+   * Get default settings
+   */
+  getDefaults() {
+    return {
       email: true,
       phone: true,
       creditCard: true,
@@ -65,14 +80,6 @@ class ConfigService {
         }
       ]
     };
-
-    console.log("📥 Fetching settings from storage");
-    const stored = await storage.get(SETTINGS_KEY);
-    this.cache = stored ? { ...defaults, ...stored } : defaults;
-
-    this.lastFetch = now;
-    
-    return this.cache;
   }
 
   async saveSettings(settings, accountId = 'Unknown User') {
@@ -91,10 +98,12 @@ class ConfigService {
       console.error(`❌ Failed to log configuration change: ${error.message}`);
     }
 
-    await storage.set(SETTINGS_KEY, settings);
-    this.cache = settings;
+    // Merge with defaults before saving to ensure no keys are accidentally lost
+    const mergedSettings = { ...this.getDefaults(), ...settings };
+    await storage.set(SETTINGS_KEY, mergedSettings);
+    this.cache = mergedSettings;
     this.lastFetch = Date.now();
-    return settings;
+    return mergedSettings;
   }
 
   invalidateCache() {
