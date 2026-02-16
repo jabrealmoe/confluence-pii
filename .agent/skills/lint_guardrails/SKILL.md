@@ -28,7 +28,15 @@ npm run lint
 - **Errors**: You **MUST** fix all errors before committing.
 - **Warnings**: Review all warnings. Clean up unused variables or imports to maintain code health.
 
-### 2. Commit Standard (Conventional Commits)
+### 2. Proactive Clean-up
+
+Before finalizing any work, scan the modified files to:
+
+- **Remove Unused Code**: Delete any variables, functions, or imports that are no longer in use.
+- **Strip Debugging Artifacts**: Ensure all temporary `console.log` statements or "TODO" comments (unless they are tracked) are removed.
+- **Eliminate Dead Logic**: Remove any commented-out code blocks or legacy functions that have been superseded by new implementations.
+
+### 3. Commit Standard (Conventional Commits)
 
 All commit messages **MUST** follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 Format: `<type>[optional scope]: <description>`
@@ -46,7 +54,7 @@ Format: `<type>[optional scope]: <description>`
 
 **Example**: `feat(admin): add interactive SVG chart to privacy dashboard`
 
-### 3. Frontend Review
+### 4. Frontend Review
 
 The code in `static/admin` is not currently covered by the root lint check. When modifying files in `static/admin/`, perform a manual review for:
 
