@@ -1,37 +1,59 @@
 ---
-name: lint_guardrails
-description: Protocol to ensure code quality by running linting before major actions.
+name: quality_guardrails
+description: Protocol to ensure code quality through linting and standardized commit messages.
 ---
 
-# Lint Guardrails Skill
+# Quality Guardrails Skill
 
-This skill ensures that code is consistently linted to prevent CI/CD failures on GitHub Actions.
+This skill ensures that code is consistently high-quality and the repository history is easy to manage by enforcing linting and Conventional Commits standards.
 
 ## Instructions
 
 Whenever you are about to:
 
-1. Commit changes to the repository.
-2. Deploy the application using the Forge CLI.
-3. Finish a major feature implementation.
+1. **Commit changes** to the repository.
+2. **Deploy the application** using the Forge CLI.
+3. **Finish a major feature** implementation.
 
 **YOU MUST** perform the following steps:
 
-1. **Run the Root Lint Check**:
+### 1. Linting Guardrail
 
-   ```bash
-   npm run lint
-   ```
+Run the Root Lint Check to ensure no regressions or code quality issues exist in the backend/trigger logic:
 
-   This checks all files in the `src/` directory.
+```bash
+npm run lint
+```
 
-2. **Resolution Protocol**:
-   - If there are any **Linting Errors**: You **MUST** fix them before proceeding with a commit or deployment.
-   - If there are **Linting Warnings**: Review them. If they indicate unused variables or potential issues, clean them up to keep the codebase maintainable.
+- **Errors**: You **MUST** fix all errors before committing.
+- **Warnings**: Review all warnings. Clean up unused variables or imports to maintain code health.
 
-3. **Frontend Awareness**:
-   The code in `static/admin` is not currently covered by the root lint check. When modifying files in `static/admin/`, perform a manual review for code quality, unused variables, and proper React patterns.
+### 2. Commit Standard (Conventional Commits)
 
-## GitHub Actions Integration
+All commit messages **MUST** follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+Format: `<type>[optional scope]: <description>`
 
-The "Comprehensive Forge CI/CD" workflow in `.github/workflows/main.yml` includes a `qa` stage that runs `npm run lint`. If this stage fails, the deployment will stop. Running linting locally ensures a smooth PR and deployment process.
+**Allowed Types:**
+
+- `feat`: A new feature (correlates with `MINOR` in Semantic Versioning).
+- `fix`: A bug fix (correlates with `PATCH` in Semantic Versioning).
+- `docs`: Documentation only changes.
+- `style`: Changes that do not affect the meaning of the code (white-space, formatting, etc).
+- `refactor`: A code change that neither fixes a bug nor adds a feature.
+- `perf`: A code change that improves performance.
+- `test`: Adding missing tests or correcting existing tests.
+- `chore`: Changes to the build process or auxiliary tools and libraries.
+
+**Example**: `feat(admin): add interactive SVG chart to privacy dashboard`
+
+### 3. Frontend Review
+
+The code in `static/admin` is not currently covered by the root lint check. When modifying files in `static/admin/`, perform a manual review for:
+
+- Unused imports/variables.
+- Proper React hook usage.
+- Accessibility and performance.
+
+## CI/CD Integration
+
+The GitHub Actions workflow in `.github/workflows/main.yml` relies on high quality standards. Standardized commits allow the `versioning` stage to accurately determine the next Semantic Version (Patch vs. Minor) for production releases.
