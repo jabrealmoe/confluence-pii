@@ -78,17 +78,17 @@ const App = () => {
     return (
         <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', color: 'var(--ds-text, #172b4d)' }}>
             <div style={{ marginBottom: '20px' }}>
-                 <h1 style={{ margin: 0, fontSize: '28px', color: 'var(--ds-text, #172b4d)' }}>🛡️ PII Protection</h1>
-                 <p style={{ margin: '8px 0 0 0', color: 'var(--ds-text-subtle, #6b778c)', fontSize: '14px' }}>Advanced Data Security & Privacy</p>
+                 <h1 style={{ margin: 0, fontSize: '28px', color: 'var(--ds-text, #172b4d)' }}>🛡️ Content Governance & Privacy</h1>
+                 <p style={{ margin: '8px 0 0 0', color: 'var(--ds-text-subtle, #6b778c)', fontSize: '14px' }}>Advanced Data Security & Institutional Safeguards</p>
             </div>
 
             <DnaAnimation />
 
             <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ margin: 0 }}>PII Types</h2>
+                <h2 style={{ margin: 0 }}>Data Detection Profiles</h2>
             </div>
 
-            <p style={{ color: 'var(--ds-text-subtle, #6b778c)' }}>Select which types of Personally Identifiable Information (PII) should be detected.</p>
+            <p style={{ color: 'var(--ds-text-subtle, #6b778c)' }}>Configure which sensitive data patterns should be monitored across your Confluence instance.</p>
 
             <div style={{
                 marginTop: '20px',
@@ -122,9 +122,9 @@ const App = () => {
                 boxShadow: 'var(--ds-shadow-raised, 0 1px 3px rgba(0,0,0,0.1))',
                 color: 'var(--ds-text, #172b4d)'
             }}>
-                <h3 style={{ marginTop: 0, color: 'var(--ds-text, #172b4d)' }}>Protection Actions</h3>
+                <h3 style={{ marginTop: 0, color: 'var(--ds-text, #172b4d)' }}>Automated Response Actions</h3>
                 <p style={{ fontSize: '14px', color: 'var(--ds-text-subtle, #6b778c)', marginBottom: '20px' }}>
-                    Configure automated actions when PII is detected.
+                    Define how the system should respond when sensitive information is identified.
                 </p>
 
                 <div style={{ marginBottom: '20px' }}>
@@ -138,7 +138,7 @@ const App = () => {
                                 Auto-Quarantine Pages
                             </div>
                             <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle, #6b778c)' }}>
-                                Automatically restrict page access when PII is detected. Only the author will be able to view and edit.
+                                Automatically restrict page access when sensitive data is flagged. Only the author will be able to view and edit.
                             </div>
                         </div>
                     </label>
@@ -155,7 +155,7 @@ const App = () => {
                                 Scan Historical Versions
                             </div>
                             <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle, #6b778c)' }}>
-                                Scan the last 10 versions of each page for PII. May impact performance for pages with many revisions.
+                                Scan the last 10 versions of each page for sensitive information. May impact performance for pages with many revisions.
                             </div>
                         </div>
                     </label>
@@ -425,7 +425,7 @@ const App = () => {
                     color: 'var(--ds-text-subtle, #6b778c)',
                     fontSize: '12px'
                 }}>
-                    PII Protection v{version.version}
+                    Data Security Suite v{version.version}
                 </div>
             )}
         </div>
