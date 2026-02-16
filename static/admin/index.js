@@ -322,6 +322,8 @@ const App = () => {
                 )}
             </div>
 
+            <DnaAnimation />
+
             <div style={{ display: 'flex', borderBottom: '1px solid #dfe1e6', marginBottom: '30px', gap: '10px' }}>
                 <TabButton id="config" label="Security Profiles" icon="⚙️" />
                 <TabButton id="review" label="Detection Oversight" icon="👁️" />
@@ -329,7 +331,6 @@ const App = () => {
 
             {activeTab === 'config' ? (
                 <div style={{ animation: 'fadeIn 0.4s ease' }}>
-                    <DnaAnimation />
 
                     {/* Analysis Dashboard */}
                     <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '30px', border: '1px solid #dfe1e6' }}>
