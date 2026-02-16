@@ -251,6 +251,8 @@ const App = () => {
                                 style={{
                                     padding: '8px 12px',
                                     width: '100%',
+                                    maxWidth: '600px',
+                                    boxSizing: 'border-box',
                                     borderRadius: '4px',
                                     border: '1px solid var(--ds-border, #dfe1e6)',
                                     fontSize: '13px',
@@ -270,7 +272,8 @@ const App = () => {
                                 fontFamily: 'monospace',
                                 backgroundColor: 'var(--ds-background-neutral, #f4f5f7)',
                                 padding: '8px',
-                                borderRadius: '4px'
+                                borderRadius: '4px',
+                                wordBreak: 'break-all'
                             }}>
                                 {level.keywords.join(', ')}
                             </div>
