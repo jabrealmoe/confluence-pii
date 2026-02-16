@@ -13,7 +13,7 @@ const Toggle = ({ checked, onChange }) => (
         style={{
             width: '44px',
             height: '24px',
-            backgroundColor: checked ? '#2563eb' : '#d1d5db',
+            backgroundColor: checked ? '#36b37e' : '#d1d5db',
             borderRadius: '12px',
             position: 'relative',
             cursor: 'pointer',
