@@ -76,6 +76,21 @@ class ConfigService {
   }
 
   async saveSettings(settings) {
+    // 🔍 AUDIT LOG: Check for changes in detection rules
+    try {
+      const oldSettings = await storage.get(SETTINGS_KEY) || {};
+      const detectionRules = ['email', 'phone', 'creditCard', 'ssn', 'passport', 'driversLicense'];
+      
+      detectionRules.forEach(rule => {
+        if (oldSettings[rule] !== settings[rule]) {
+          const status = settings[rule] ? 'ENABLED' : 'DISABLED';
+          console.log(`📡 [CONFIG UPDATE] Detection rule '${rule}' was ${status}`);
+        }
+      });
+    } catch (error) {
+      console.error(`❌ Failed to log configuration change: ${error.message}`);
+    }
+
     await storage.set(SETTINGS_KEY, settings);
     this.cache = settings;
     this.lastFetch = Date.now();
